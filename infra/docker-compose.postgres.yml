@@ -1,0 +1,22 @@
+# Chỉ PostgreSQL — dùng khi chạy backend/frontend trực tiếp trên máy (npm run dev:*).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ikp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ikp
+      POSTGRES_PASSWORD: ikp_dev_secret
+      POSTGRES_DB: ikp
+    ports:
+      - "5432:5432"
+    volumes:
+      - ikp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ikp -d ikp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ikp_pgdata:

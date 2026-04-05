@@ -1,0 +1,10 @@
+// Task 2 will extend this schema with domain models.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

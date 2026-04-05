@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Environment (secrets & machine-specific; *.example stay tracked — see negation in apps/frontend/.gitignore)
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Next.js / deploy targets
+.vercel
+
+# Lint / compiler caches (dev & CI artifacts)
+.eslintcache
+.turbo/
+.swc/
+
+# Local DB / dumps (accidental; project uses Postgres via Docker)
+*.sqlite
+*.sqlite-journal
+
+# Secrets & local keys
+*.pem
+*.p12
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# Local Docker overrides (per-developer; not shared)
+**/docker-compose.override.yml
+
+# Testing / coverage
+coverage/

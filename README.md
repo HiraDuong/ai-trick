@@ -1,93 +1,213 @@
-# internal-knowledge-platform
+# Internal Knowledge Platform
 
+Nền tảng nội bộ để quản lý và chia sẻ kiến thức trong khuôn khổ Hackathon. Repo được tổ chức dạng **monorepo** (npm workspaces): backend API, frontend web, và cấu hình hạ tầng tách bạch.
 
+## Tóm tắt dự án hiện có
 
-## Getting started
+| Thành phần | Mô tả |
+|------------|--------|
+| **Backend** (`apps/backend`) | API **Express.js** + **Prisma** (PostgreSQL). Hiện có endpoint kiểm tra sức khỏe `GET /health`; chưa có nghiệp vụ domain hay xác thực. |
+| **Frontend** (`apps/frontend`) | **Next.js 15** (App Router) + **Tailwind CSS** — giao diện khởi tạo mặc định. |
+| **Cơ sở dữ liệu** | **PostgreSQL 16** — file `infra/docker-compose.postgres.yml` (chỉ DB khi dev trên máy) hoặc full stack trong `infra/docker-compose.yml`. |
+| **CI/CD** | **GitLab** — `.gitlab-ci.yml`: cài đặt, build, lint (tùy chọn), build & push image Docker, deploy SSH (chỉ nhánh `main` / `production`). |
+| **Triển khai** | **DigitalOcean Droplet** (mặc định trong tài liệu); script và compose production trong `infra/deploy/`. |
+| **Prisma** | Đã kết nối PostgreSQL; `schema.prisma` hiện chỉ có datasource (model domain sẽ bổ sung theo roadmap). |
+| **Tích hợp sau này** | Elasticsearch được dự kiến; **chưa** triển khai trong repo này. |
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Cấu trúc thư mục chính:
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
+```text
+internal-knowledge-platform/
+├── apps/
+│   ├── backend/          # Express + Prisma + Dockerfile
+│   └── frontend/         # Next.js + Tailwind + Dockerfile
+├── docs/
+│   ├── branch-strategy.md
+│   └── kubernetes-roadmap.md
+├── infra/
+│   ├── docker-compose.postgres.yml   # Chỉ Postgres (npm run db:up)
+│   ├── docker-compose.yml            # Postgres + backend + frontend (Docker)
+│   └── deploy/                       # Compose production + script deploy + hướng dẫn server
+├── .gitlab-ci.yml
+├── .dockerignore
+├── package.json
+├── .env.example
+└── README.md
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/luv-hackathon/internal-knowledge-platform.git
-git branch -M main
-git push -uf origin main
+
+## Yêu cầu môi trường
+
+- **Node.js** ≥ 20  
+- **npm** (kèm Node)  
+- **Docker Desktop** (hoặc Docker Engine + Compose) — để chạy PostgreSQL  
+
+## Cài đặt lần đầu
+
+Từ thư mục gốc của repo:
+
+```bash
+npm install
 ```
 
-## Integrate with your tools
+Tạo file môi trường cho backend (bắt buộc trước khi dùng Prisma migrate / DB):
 
-* [Set up project integrations](https://gitlab.com/luv-hackathon/internal-knowledge-platform/-/settings/integrations)
+```bash
+# Windows (PowerShell)
+Copy-Item apps/backend/.env.example apps/backend/.env
 
-## Collaborate with your team
+# macOS / Linux
+cp apps/backend/.env.example apps/backend/.env
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+Nội dung `DATABASE_URL` trong `.env` mặc định khớp với `docker-compose` (user `ikp`, database `ikp`).
 
-## Test and Deploy
+Sinh Prisma Client (sau khi có `schema.prisma` hợp lệ):
 
-Use the built-in continuous integration in GitLab.
+```bash
+npm run prisma:generate --workspace=backend
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## Cách chạy dự án
 
-***
+### 1. Khởi động PostgreSQL
 
-# Editing this README
+Bật Docker Desktop, sau đó:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+npm run db:up
+```
 
-## Suggestions for a good README
+Kiểm tra container: tên `ikp-postgres`, port host **5432**.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Tắt khi không cần:
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+npm run db:down
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Xem log Postgres:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+npm run db:logs
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### 2. Chạy backend (API)
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Terminal 1 — từ thư mục gốc:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+npm run dev:backend
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+- Mặc định API lắng nghe **http://localhost:4000** (đổi bằng `PORT` trong `apps/backend/.env`).  
+- Kiểm tra nhanh: truy cập **http://localhost:4000/health** → JSON `{ "status": "ok" }`.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 3. Chạy frontend
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Terminal 2 — từ thư mục gốc:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```bash
+npm run dev:frontend
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+- Ứng dụng web: **http://localhost:3000** (Next.js dev; có thể bật Turbopack trong script `dev` của frontend nếu cần).
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Build production (tham khảo)
 
-## License
-For open source projects, say how it is licensed.
+```bash
+npm run build --workspace=backend
+npm run build --workspace=frontend
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Chạy backend đã build: `npm run start --workspace=backend` (sau `tsc`).  
+Chạy frontend production: `npm run start --workspace=frontend` (sau `next build`).
+
+## Chạy bằng Docker (Postgres + API + Next.js)
+
+Từ thư mục gốc (Docker build context là root monorepo):
+
+```bash
+npm run compose:up
+```
+
+- Frontend: **http://localhost:3000** — Backend: **http://localhost:4000** — Postgres nội bộ mạng compose.  
+- Tắt: `npm run compose:down` — Log: `npm run compose:logs`
+
+Build image thủ công:
+
+```bash
+docker build -f apps/backend/Dockerfile -t ikp-backend .
+docker build -f apps/frontend/Dockerfile --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000 -t ikp-frontend .
+```
+
+**Ghi chú:** Trong `apps/frontend/Dockerfile`, bước cài dependency dùng `npm install` **không** copy `package-lock.json`, vì lockfile tạo trên Windows thường thiếu optional native cho Linux (Tailwind v4 / lightningcss). Pipeline GitLab dùng `node:20-bookworm-slim` và `npm install` với lý do tương tự. Backend image vẫn dùng `npm ci` + lockfile.
+
+## Chiến lược nhánh (tóm tắt)
+
+| Nhánh | CI (build / docker) | Deploy tự động |
+|--------|---------------------|----------------|
+| `main`, `production` | Có | Có (job `deploy_production`) |
+| `develop`, `feature/*`, khác | Có | Không |
+
+Chi tiết, ví dụ merge request và lệnh Git: xem [docs/branch-strategy.md](docs/branch-strategy.md).
+
+## CI/CD GitLab (luồng pipeline)
+
+File cấu hình: **`.gitlab-ci.yml`**.
+
+| Stage | Việc làm |
+|--------|-----------|
+| **install** | `npm install` (Linux bookworm; tránh lỗi optional native so với `npm ci` + lock Windows). |
+| **build** | `prisma generate`, `npm run build` backend + frontend. |
+| **test** | `npm run lint --workspace=frontend` (`allow_failure: true`). |
+| **docker** | Build & push `backend` và `frontend` lên **GitLab Container Registry** (`$CI_REGISTRY_IMAGE/backend|frontend:$CI_COMMIT_SHORT_SHA` và `:latest`). Cần runner hỗ trợ **Docker-in-Docker**. |
+| **deploy** | Chỉ khi nhánh **`main`** hoặc **`production`**: SSH tới server, chạy `infra/deploy/remote-deploy.sh` (đăng nhập registry, `docker compose pull` + `up -d`). |
+
+### Biến GitLab CI/CD (Settings → CI/CD → Variables)
+
+| Biến | Mô tả |
+|------|--------|
+| `DEPLOY_SSH_PRIVATE_KEY` | Private key SSH (khuyến nghị **Protected** + **Masked**; loại File nếu phù hợp). |
+| `DEPLOY_HOST` | IP hoặc hostname Droplet. |
+| `DEPLOY_USER` | User SSH (ví dụ `deploy`). |
+| `NEXT_PUBLIC_API_URL` | (Tùy chọn) URL API công khai khi build image frontend. |
+
+Không hardcode mật khẩu registry: pipeline dùng biến có sẵn `CI_REGISTRY`, `CI_REGISTRY_USER`, `CI_REGISTRY_PASSWORD`.
+
+## Triển khai production (DigitalOcean Droplet)
+
+1. Tạo Droplet Ubuntu, cài Docker Engine + Compose plugin, tạo user `deploy` và thư mục `/opt/ikp`.  
+2. Copy `infra/deploy/docker-compose.prod.yml` → `/opt/ikp/docker-compose.prod.yml`, tạo `/opt/ikp/.env` từ `infra/deploy/.env.example`.  
+3. Gán public key tương ứng với `DEPLOY_SSH_PRIVATE_KEY` cho user deploy.  
+
+Hướng dẫn đầy đủ: [infra/deploy/SERVER_SETUP_DIGITALOCEAN.md](infra/deploy/SERVER_SETUP_DIGITALOCEAN.md).  
+(AWS EC2 là phương án tương đương: security group mở 22/80, các bước Docker giống hệt.)
+
+## Nâng cấp tùy chọn: Kubernetes
+
+Thiết kế mức cao (Pods, Deployments, Ingress, GitOps): [docs/kubernetes-roadmap.md](docs/kubernetes-roadmap.md). Chưa có manifest k8s trong repo.
+
+## Script hữu ích (thư mục gốc)
+
+| Lệnh | Ý nghĩa |
+|------|---------|
+| `npm run dev:backend` | API dev (watch) |
+| `npm run dev:frontend` | Next.js dev |
+| `npm run db:up` / `db:down` / `db:logs` | Chỉ Postgres (`docker-compose.postgres.yml`) |
+| `npm run compose:up` / `compose:down` / `compose:logs` | Full stack Docker (`infra/docker-compose.yml`) |
+
+Trong `apps/backend`: `prisma:migrate`, `prisma:studio`, v.v. — xem `apps/backend/package.json`.
+
+## Biến môi trường
+
+- **Gợi ý tổng hợp:** `.env.example` ở root.  
+- **Backend thực tế:** `apps/backend/.env` (không commit; đã có trong `.gitignore`).  
+- **Frontend (tùy chọn):** `apps/frontend/.env.local` — ví dụ `NEXT_PUBLIC_API_URL` khi nối API.
+
+## Bảo trì tài liệu (bắt buộc đối với contributor)
+
+**Mỗi khi dự án thay đổi** (stack, cấu trúc thư mục, lệnh chạy, biến môi trường, endpoint mới, migration DB, tính năng đáng kể), hãy **cập nhật `README.md` trong cùng PR/commit** để hướng dẫn luôn khớp code. Nếu thêm bước bắt buộc (ví dụ seed, auth), ghi rõ vào các mục tương ứng ở trên.
+
+---
+
+*Cập nhật lần cuối: thêm Docker image, Compose full stack, GitLab CI/CD, deploy SSH (DigitalOcean), tài liệu nhánh & Kubernetes roadmap; foundation API vẫn chỉ `/health`.*

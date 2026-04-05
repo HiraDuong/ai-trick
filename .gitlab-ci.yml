@@ -1,0 +1,112 @@
+# Internal Knowledge Platform — GitLab CI/CD (monorepo)
+# Secrets: GitLab → Settings → CI/CD → Variables (không hardcode trong file này).
+# Deploy: DEPLOY_SSH_PRIVATE_KEY, DEPLOY_HOST, DEPLOY_USER (+ tùy chọn NEXT_PUBLIC_API_URL cho build frontend).
+
+stages:
+  - install
+  - build
+  - test
+  - docker
+  - deploy
+
+variables:
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# Cache npm theo lockfile (install/build/test dùng chung key).
+.npm_cache: &npm_cache
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+      - .npm/
+
+install:
+  stage: install
+  image: node:20-bookworm-slim
+  <<: *npm_cache
+  script:
+    # npm install (không ci): lockfile từ Windows có thể thiếu optional native linux cho Tailwind v4.
+    - npm install
+
+build:
+  stage: build
+  image: node:20-bookworm-slim
+  <<: *npm_cache
+  needs: ["install"]
+  script:
+    - npm install
+    - npm run prisma:generate --workspace=backend
+    - npm run build --workspace=backend
+    - npm run build --workspace=frontend
+
+test:
+  stage: test
+  image: node:20-bookworm-slim
+  <<: *npm_cache
+  needs: ["install"]
+  script:
+    - npm install
+    - npm run lint --workspace=frontend
+  allow_failure: true
+
+.docker_job:
+  stage: docker
+  image: docker:24-cli
+  services:
+    - docker:24-dind
+  before_script:
+    - docker info
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+docker_backend:
+  extends: .docker_job
+  needs: ["build"]
+  script:
+    - docker build -f apps/backend/Dockerfile -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/backend:latest" .
+    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE/backend:latest"
+
+docker_frontend:
+  extends: .docker_job
+  needs: ["build"]
+  script:
+    - |
+      docker build -f apps/frontend/Dockerfile \
+        --build-arg "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000}" \
+        -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" \
+        -t "$CI_REGISTRY_IMAGE/frontend:latest" \
+        .
+    - docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE/frontend:latest"
+
+deploy_production:
+  stage: deploy
+  image: alpine:3.20
+  needs:
+    - job: docker_backend
+    - job: docker_frontend
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "production"
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval "$(ssh-agent -s)"
+    - echo "$DEPLOY_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=yes "$DEPLOY_USER@$DEPLOY_HOST" \
+        "export CI_REGISTRY='$CI_REGISTRY' \
+        CI_REGISTRY_IMAGE='$CI_REGISTRY_IMAGE' \
+        CI_COMMIT_SHORT_SHA='$CI_COMMIT_SHORT_SHA' \
+        CI_REGISTRY_USER='$CI_REGISTRY_USER' \
+        CI_REGISTRY_PASSWORD='$CI_REGISTRY_PASSWORD'; \
+        bash -s" \
+        < infra/deploy/remote-deploy.sh
+  environment:
+    name: production
+    url: http://$DEPLOY_HOST
