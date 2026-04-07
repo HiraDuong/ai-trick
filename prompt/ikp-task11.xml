@@ -1,0 +1,32 @@
+<task id="task-11-article-ui" phase="phase-5" name="Article UI">
+  <objective>
+    Build article list and detail pages.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+    <depends-on>task-6-article-detail</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Article list page</item>
+    <item>Article detail page</item>
+  </scope>
+
+  <requirements>
+    <requirement>Fetch data from backend APIs</requirement>
+    <requirement>Display article content</requirement>
+    <requirement>Display author and metadata</requirement>
+    <requirement>Handle loading and error states</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Do not mock data</rule>
+    <rule>Keep UI modular (components)</rule>
+  </rules>
+
+  <acceptance>
+    <criteria>List page displays paginated articles</criteria>
+    <criteria>Detail page displays full article</criteria>
+  </acceptance>
+</task>

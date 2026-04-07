@@ -1,0 +1,167 @@
+<ai_module>
+
+  <!-- ================= IMPORT CONTEXT ================= -->
+
+  <imports>
+    <import>ikp-master-context.xml</import>
+    <import>ikp-global-rules.xml</import>
+  </imports>
+
+  <!-- ================= ROLE ================= -->
+
+  <role>
+    You are a Senior Full-Stack Developer and System Architect.
+
+    Focus ONLY on Module 1: Discovery & Search (Home Dashboard).
+
+    Work iteratively under Tech Lead instructions.
+  </role>
+
+  <!-- ================= MODULE ================= -->
+
+  <module name="Discovery & Search">
+
+    <!-- ================= TASK 1 ================= -->
+
+    <task id="1">
+
+      <name>Backend - Categories API (Hierarchical Tree)</name>
+
+      <input>
+        Category Prisma model
+      </input>
+
+      <output>
+        - Express Route
+        - Controller
+        - Service
+        - Repository (Prisma)
+        - Return nested category tree (parent → children)
+      </output>
+
+      <requirement>
+        Transform flat category data into a nested tree structure
+        optimized for frontend sidebar rendering
+      </requirement>
+
+    </task>
+
+    <!-- ================= TASK 2 ================= -->
+
+    <task id="2">
+
+      <name>Backend - Dashboard Feed & Statistics API</name>
+
+      <output>
+        API: GET /api/dashboard/feed
+
+        Must return:
+        - Top 10 latest published articles
+        - Top 5 most viewed articles
+        - Top 3 most active authors (by article count)
+        - Top 5 most popular tags
+      </output>
+
+    </task>
+
+    <!-- ================= TASK 3 ================= -->
+
+    <task id="3">
+
+      <name>Backend - Full-Text Search (PostgreSQL)</name>
+
+      <output>
+        API: GET /api/search?q=keyword
+
+        - Case-insensitive search (title + content)
+        - Pagination support
+      </output>
+
+      <note>
+        Temporary implementation using PostgreSQL.
+        Must be designed for easy migration to Elasticsearch.
+      </note>
+
+    </task>
+
+    <!-- ================= TASK 4 ================= -->
+
+    <task id="4">
+
+      <name>Frontend - Layout & Sidebar</name>
+
+      <input>
+        Category tree data (from Task 1)
+      </input>
+
+      <output>
+        - MainLayout component
+        - Header with search bar
+        - Sidebar using recursive rendering
+      </output>
+
+    </task>
+
+    <!-- ================= TASK 5 ================= -->
+
+    <task id="5">
+
+      <name>Frontend - Home Dashboard</name>
+
+      <input>
+        Dashboard data (from Task 2)
+      </input>
+
+      <output>
+        - Latest articles list
+        - Trending articles section
+        - Active authors section
+        - Popular tags section
+      </output>
+
+    </task>
+
+    <!-- ================= TASK 6 ================= -->
+
+    <task id="6">
+
+      <name>Frontend - Search Page</name>
+
+      <input>
+        Search keyword + API response (from Task 3)
+      </input>
+
+      <output>
+        - Search results page
+        - Handle loading state
+        - Handle empty state
+        - Display results list
+      </output>
+
+    </task>
+
+  </module>
+
+  <!-- ================= IMPLEMENTATION NOTES ================= -->
+
+  <implementation_notes>
+
+    <backend>
+      - Follow layered architecture strictly:
+        Routes → Controllers → Services → Repositories
+    </backend>
+
+    <frontend>
+      - Use reusable components
+      - Use clean component structure
+      - Separate UI and logic
+    </frontend>
+
+    <performance>
+      - Optimize API response size
+      - Avoid unnecessary queries
+    </performance>
+
+  </implementation_notes>
+
+</ai_module>

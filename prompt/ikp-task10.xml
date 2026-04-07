@@ -1,0 +1,38 @@
+<task id="task-9-search" phase="phase-4" name="Search API">
+  <objective>
+    Implement PostgreSQL full-text search for articles.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Search articles by keyword</item>
+    <item>Return paginated results</item>
+  </scope>
+
+  <requirements>
+    <requirement>Search title and content fields</requirement>
+    <requirement>Only include published articles</requirement>
+    <requirement>Support pagination</requirement>
+    <requirement>Design response compatible with future Elasticsearch</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Do not implement Elasticsearch yet</rule>
+    <rule>Keep search logic isolated from controller</rule>
+  </rules>
+
+  <outputs>
+    <file>search.repository.js</file>
+    <file>search.service.js</file>
+    <file>search.controller.js</file>
+    <file>search.routes.js</file>
+  </outputs>
+
+  <acceptance>
+    <criteria>Search returns relevant results</criteria>
+    <criteria>Pagination works correctly</criteria>
+  </acceptance>
+</task>

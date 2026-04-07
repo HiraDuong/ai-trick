@@ -1,17 +1,9 @@
-import "dotenv/config";
-import cors from "cors";
-import express from "express";
+// Luvina
+// Vu Huy Hoang - Dev2
+import "./config/env";
+import app from "./app";
+import config from "./config/env";
 
-const app = express();
-const port = Number(process.env.PORT) || 4000;
-
-app.use(cors());
-app.use(express.json());
-
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+app.listen(config.port, () => {
+  console.log(`Backend server listening on port ${config.port}`);
 });
