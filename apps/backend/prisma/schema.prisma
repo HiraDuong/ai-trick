@@ -1,0 +1,143 @@
+// Luvina
+// Vu Huy Hoang - Dev2
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  AUTHOR
+  EDITOR
+  VIEWER
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum HelpfulnessValue {
+  HELPFUL
+  NOT_HELPFUL
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  passwordHash       String
+  role               UserRole            @default(VIEWER)
+  articles           Article[]
+  articleVersions    ArticleVersion[]    @relation("ArticleVersionUpdatedBy")
+  comments           Comment[]
+  helpfulnessRatings HelpfulnessRating[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  articles    Article[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([parentId, name])
+  @@index([parentId])
+}
+
+model Article {
+  id                 String              @id @default(cuid())
+  title              String
+  content            Json
+  status             ArticleStatus       @default(DRAFT)
+  publishedAt        DateTime?
+  views              Int                 @default(0)
+  authorId           String
+  categoryId         String
+  author             User                @relation(fields: [authorId], references: [id])
+  category           Category            @relation(fields: [categoryId], references: [id])
+  articleTags        ArticleTag[]
+  versions           ArticleVersion[]
+  comments           Comment[]
+  helpfulnessRatings HelpfulnessRating[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([publishedAt])
+}
+
+model Tag {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  articleTags ArticleTag[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ArticleTag {
+  articleId  String
+  tagId      String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+model ArticleVersion {
+  id              String   @id @default(cuid())
+  articleId       String
+  contentSnapshot Json
+  updatedById     String
+  updatedAt       DateTime @default(now())
+  article         Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  updatedBy       User     @relation("ArticleVersionUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([articleId])
+  @@index([updatedById])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  articleId String
+  userId    String
+  parentId  String?
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+  parent    Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentThread")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model HelpfulnessRating {
+  id        String           @id @default(cuid())
+  articleId String
+  userId    String
+  value     HelpfulnessValue
+  createdAt DateTime         @default(now())
+  article   Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@unique([articleId, userId])
+  @@index([userId])
+}

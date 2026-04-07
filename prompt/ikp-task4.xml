@@ -1,0 +1,41 @@
+<task id="task-4-article-core" phase="phase-2" name="Article Core System">
+  <objective>
+    Implement the core article system with CRUD operations and list/detail retrieval.
+  </objective>
+
+  <scope>
+    <item>Create article</item>
+    <item>Update article</item>
+    <item>Delete article</item>
+    <item>Get article detail</item>
+    <item>Get article list with pagination</item>
+  </scope>
+
+  <requirements>
+    <requirement>Use existing Prisma schema only</requirement>
+    <requirement>Support draft and published status</requirement>
+    <requirement>Filter published articles by default</requirement>
+    <requirement>Implement pagination (skip/take or cursor)</requirement>
+    <requirement>Use select/include to avoid overfetching</requirement>
+    <requirement>Maintain repository/service/controller separation</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Only the author can update or delete their own articles</rule>
+    <rule>Do not implement comments, search, or frontend logic</rule>
+    <rule>Do not modify existing auth or dashboard logic</rule>
+  </rules>
+
+  <outputs>
+    <file>article.repository.js</file>
+    <file>article.service.js</file>
+    <file>article.controller.js</file>
+    <file>article.routes.js</file>
+  </outputs>
+
+  <acceptance>
+    <criteria>All CRUD endpoints work with PostgreSQL</criteria>
+    <criteria>Pagination returns consistent results</criteria>
+    <criteria>Unauthorized users cannot modify other users' articles</criteria>
+  </acceptance>
+</task>

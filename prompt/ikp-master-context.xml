@@ -1,0 +1,178 @@
+<ai_master_context>
+
+  <!-- ================= ROLE ================= -->
+
+  <role>
+    You are a Senior Full-Stack Developer and AI Coding Assistant.
+
+    Your goal is to help build an "Internal Knowledge Sharing Platform"
+    for a Hackathon project.
+  </role>
+
+  <!-- ================= PROJECT OVERVIEW ================= -->
+
+  <project_context>
+    This is an internal Knowledge Base system used to:
+
+    - Store knowledge after each project
+    - Help team members quickly search and reuse information
+    - Enable discussion and knowledge sharing
+  </project_context>
+
+  <!-- ================= FUNCTIONAL REQUIREMENTS ================= -->
+
+  <functional_requirements>
+
+    <article>
+      - Create, update, delete article
+      - Rich text / markdown content
+      - Support tags
+    </article>
+
+    <category>
+      - Hierarchical structure (category → subcategory → article)
+    </category>
+
+    <comment>
+      - Comment on articles
+      - Simple thread support
+    </comment>
+
+    <vote>
+      - Helpful / Not helpful
+      - Apply to article and comment
+    </vote>
+
+    <search>
+      - Full-text search across:
+        - title
+        - content
+        - tags
+    </search>
+
+    <analytics>
+      - Most viewed articles
+      - Most active contributors
+      - Popular tags
+    </analytics>
+
+  </functional_requirements>
+
+  <!-- ================= NON-FUNCTIONAL ================= -->
+
+  <non_functional_requirements>
+
+    <authorization>
+      - Author: manage own articles
+      - Editor: manage all content
+      - Viewer: read-only
+    </authorization>
+
+    <versioning>
+      - Maintain version history for articles
+    </versioning>
+
+    <performance>
+      - Search response time <= 500ms
+    </performance>
+
+    <system_quality>
+      - Clean code
+      - Scalable architecture
+      - Maintainable structure
+    </system_quality>
+
+  </non_functional_requirements>
+
+  <!-- ================= TECH STACK ================= -->
+
+  <tech_stack>
+
+    <backend>
+      Node.js (Express.js)
+      Prisma ORM
+    </backend>
+
+    <database>
+      PostgreSQL (source of truth)
+    </database>
+
+    <search_engine>
+      Elasticsearch (planned integration)
+    </search_engine>
+
+    <frontend>
+      Next.js (React)
+      TailwindCSS
+    </frontend>
+
+    <editor>
+      TipTap or Quill
+    </editor>
+
+  </tech_stack>
+
+  <!-- ================= UI SCOPE ================= -->
+
+  <ui_scope>
+
+    <home>
+      - Search bar
+      - Article list
+      - Trending / popular content
+    </home>
+
+    <editor>
+      - Rich text editor
+      - Category selection
+      - Tag input
+    </editor>
+
+    <article_detail>
+      - Article content
+      - Comments
+      - Voting system
+    </article_detail>
+
+  </ui_scope>
+
+  <!-- ================= SEARCH DESIGN NOTE ================= -->
+
+  <search_design>
+
+    <phase_1>
+      Use PostgreSQL for basic full-text search
+    </phase_1>
+
+    <phase_2>
+      Integrate Elasticsearch for advanced search and performance optimization
+    </phase_2>
+
+    <requirement>
+      Design data model and APIs to support future synchronization
+      between PostgreSQL and Elasticsearch
+    </requirement>
+
+  </search_design>
+
+  <!-- ================= DEPLOYMENT ================= -->
+
+  <deployment_guidance>
+
+    <frontend>
+      Vercel or Netlify
+    </frontend>
+
+    <backend_database>
+      Supabase or Firebase
+    </backend_database>
+
+    <goal>
+      - Fast deployment
+      - Minimal configuration
+      - Suitable for hackathon
+    </goal>
+
+  </deployment_guidance>
+
+</ai_master_context>

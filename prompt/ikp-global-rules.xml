@@ -1,0 +1,167 @@
+<ai_global_rules>
+
+  <!-- ================= CORE WORKFLOW ================= -->
+
+  <workflow>
+
+    <rule>
+      ITERATIVE DEVELOPMENT ONLY:
+      Complete exactly ONE task at a time.
+    </rule>
+
+    <rule>
+      STOP AFTER EACH TASK:
+      After finishing a task, you MUST stop and ask:
+      "Tech Lead, please review. Should I make any changes, or proceed to the next task?"
+    </rule>
+
+    <rule>
+      PROCEED ONLY WHEN APPROVED:
+      Only continue when the Tech Lead explicitly says:
+      "Approved. Proceed to Task X"
+    </rule>
+    <rule>
+     Do NOT run prisma init automatically.
+     Assume Prisma is already configured.
+    </rule>
+  </workflow>
+
+  <!-- ================= OUTPUT CONTROL ================= -->
+
+  <output_control>
+
+    <rule>
+      DO NOT generate the entire project at once
+    </rule>
+
+    <rule>
+      DO NOT generate code for multiple tasks in one response
+    </rule>
+
+    <rule>
+      DO NOT add extra features not requested
+    </rule>
+
+    <rule>
+      DO NOT assume missing requirements
+    </rule>
+
+    <rule>
+      DO NOT skip steps
+    </rule>
+
+  </output_control>
+
+  <!-- ================= CODE QUALITY ================= -->
+
+  <code_quality>
+
+    <rule>
+      Follow clean code principles
+    </rule>
+
+    <rule>
+      Use descriptive variable and function names
+    </rule>
+
+    <rule>
+      No file exceeds 300 lines
+    </rule>
+
+    <rule>
+      No duplicated code blocks longer than 20 lines
+    </rule>
+
+    <rule>
+      Keep functions small and focused
+    </rule>
+
+  </code_quality>
+
+  <!-- ================= ARCHITECTURE ================= -->
+
+  <architecture>
+
+    <pattern>
+      Layered Architecture:
+      Routes → Controllers → Services → Repositories
+    </pattern>
+
+    <rules>
+
+      <controller>
+        - Handle request and response only
+        - No business logic
+      </controller>
+
+      <service>
+        - Contains all business logic
+      </service>
+
+      <repository>
+        - Handles database access only (Prisma)
+      </repository>
+
+    </rules>
+
+  </architecture>
+
+  <!-- ================= BACKEND RULES ================= -->
+
+  <backend>
+
+    <rule>
+      Use async/await consistently
+    </rule>
+
+    <rule>
+      Always handle errors properly (try/catch)
+    </rule>
+
+    <rule>
+      Return consistent API response format
+    </rule>
+
+    <rule>
+      Validate input before processing
+    </rule>
+
+  </backend>
+
+  <!-- ================= FRONTEND RULES ================= -->
+
+  <frontend>
+
+    <rule>
+      Use reusable components
+    </rule>
+
+    <rule>
+      Keep UI and logic separated
+    </rule>
+
+    <rule>
+      Handle loading and empty states
+    </rule>
+
+  </frontend>
+
+  <!-- ================= SCALABILITY ================= -->
+
+  <scalability>
+
+    <rule>
+      Write code with extensibility in mind
+    </rule>
+
+    <rule>
+      Avoid tight coupling between modules
+    </rule>
+
+    <rule>
+      Design APIs that can support future Elasticsearch integration
+    </rule>
+
+  </scalability>
+
+</ai_global_rules>
