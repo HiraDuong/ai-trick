@@ -1,0 +1,78 @@
+<self_review>
+  <context>
+    This is a pre-implementation review of the task definition and current codebase.
+    The goal is to assess completeness, identify overlaps with existing implementation,
+    and determine what needs to be implemented or improved.
+  </context>
+
+  <review_scope>
+    <area>Autosave (frontend)</area>
+    <area>Versioning logic (backend)</area>
+    <area>Notifications (backend)</area>
+    <area>View counting (backend)</area>
+    <area>Comment UX (frontend)</area>
+  </review_scope>
+
+  <findings>
+
+    <finding area="autosave">
+      Autosave is partially implemented but lacks debounce control and proper state handling.
+      Potential issues include race conditions, concurrent requests, and unclear UI states.
+    </finding>
+
+    <finding area="versioning">
+      Version creation exists but needs optimization:
+      - Possible duplicate snapshots when content is unchanged
+      - No strict enforcement of version limits
+      - Restore flow may create unnecessary additional versions
+    </finding>
+
+    <finding area="notifications">
+      Notification retrieval exists but lacks explicit limiting.
+      Risk of returning excessive data and impacting performance.
+    </finding>
+
+    <finding area="view_count">
+      View counting logic is present but does not include abuse prevention.
+      Needs deduplication (session/user-based) and rate limiting considerations.
+    </finding>
+
+    <finding area="comment_ui">
+      Comment UI exists but lacks:
+      - Delete confirmation
+      - Clear deleted-state representation
+    </finding>
+
+  </findings>
+
+  <gaps>
+    <gap>Missing debounce + race-condition handling in autosave</gap>
+    <gap>No content hashing to prevent duplicate versions</gap>
+    <gap>No enforced limit on number of stored versions</gap>
+    <gap>No pagination/limit applied to notifications</gap>
+    <gap>No deduplication mechanism for view counting</gap>
+    <gap>Comment deletion UX is incomplete</gap>
+  </gaps>
+
+  <risks>
+    <risk>Autosave may overwrite newer data due to concurrent requests</risk>
+    <risk>Version table may grow indefinitely without pruning</risk>
+    <risk>Notification endpoint may return excessive payload</risk>
+    <risk>View count can be inflated via repeated refresh or abuse</risk>
+    <risk>UI inconsistency when deleting comments without confirmation</risk>
+  </risks>
+
+  <decision>
+    Proceed with implementation.
+    Focus on incremental improvements while preserving existing behavior.
+  </decision>
+
+  <next_actions>
+    <action>Implement autosave debounce with race-condition protection</action>
+    <action>Optimize versioning using content hashing and enforce limit (max 20)</action>
+    <action>Add limit/pagination to notification queries</action>
+    <action>Add deduplication and basic rate limiting to view counting</action>
+    <action>Enhance comment UI with delete confirmation and deleted state</action>
+  </next_actions>
+
+</self_review>

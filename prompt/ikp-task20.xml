@@ -1,0 +1,23 @@
+<task id="20-reaction-system">
+
+  <database>
+    Reaction (
+      userId,
+      articleId,
+      type
+    )
+  </database>
+
+  <backend>
+    <api>
+      <endpoint>POST /reactions</endpoint>
+    </api>
+  </backend>
+
+  <frontend>
+    <ui>
+      <buttons>👍 ❤️ 😂</buttons>
+    </ui>
+  </frontend>
+
+</task>

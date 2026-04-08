@@ -1,0 +1,116 @@
+<ai_test_execution>
+
+  <instruction>
+    Perform the full testing workflow for the system.
+
+    The process MUST include:
+    1. Prepare and seed test data into the database for each test case
+    2. Execute backend API test cases
+    3. Collect and verify results
+    4. Generate a final report in CSV format
+
+    Do NOT modify the system logic. Do NOT skip any test case.
+  </instruction>
+
+  <phases>
+
+    <phase id="1_seed_data">
+      <description>
+        Prepare and insert all required test data into the database before running tests.
+      </description>
+
+      <requirements>
+        - Create realistic seed data for:
+          + Users
+          + Articles (including drafts and versions)
+          + Comments
+          + Reactions
+          + Notifications
+        - Ensure relationships between entities are correctly established
+        - Each test case must have its own required dataset
+        - Data must support both positive and negative scenarios
+      </requirements>
+    </phase>
+
+    <phase id="2_execute_tests">
+      <description>
+        Execute backend API test cases one by one using the prepared test data.
+      </description>
+
+      <requirements>
+        - Call the relevant API endpoints for each test case
+        - Capture API responses (status code + response body)
+        - Validate behavior against expected outcomes
+        - Handle authentication where required
+      </requirements>
+    </phase>
+
+    <phase id="3_generate_report">
+      <description>
+        Generate a final test report in CSV format.
+      </description>
+
+      <output_format>
+
+        The CSV MUST include the following columns:
+
+        case_id,
+        description,
+        preconditions,
+        test_data,
+        steps,
+        api_response,
+        expected_result,
+        compare,
+        db_verification,
+        status,
+        notes
+
+      </output_format>
+
+      <field_definitions>
+
+        - case_id: Unique identifier of the test case
+        - description: Short description of the test case
+        - preconditions: Required setup before test execution
+        - test_data: Actual data used in the test (NOT description, MUST be concrete values)
+        - steps: API call steps or sequence of actions
+        - api_response: Raw response returned from the API
+        - expected_result: Expected outcome (including DB state if applicable)
+        - compare: Comparison between api_response and expected_result
+        - db_verification: Actual verification result from database
+        - status: PASS / FAIL
+        - notes: Additional observations or errors
+
+      </field_definitions>
+
+      <rules>
+        - Each test case must be a separate CSV row
+        - Do not omit any test case
+        - api_response must reflect real execution output
+        - expected_result must be derived from requirements
+        - compare must clearly indicate match or mismatch
+        - db_verification must confirm persistence or state changes
+        - status must be determined based on comparison and DB verification
+      </rules>
+
+      <suggestions>
+        You may include additional columns if helpful, such as:
+        - response_time
+        - error_message
+        - validation_errors
+      </suggestions>
+
+    </phase>
+
+  </phases>
+
+  <constraints>
+    - Do not skip any test case
+    - Do not fabricate API responses without execution
+    - Do not modify backend implementation
+    - Ensure reproducibility of seed data
+    - Ensure isolation between test cases where possible
+  </constraints>
+
+</ai_test_execution>

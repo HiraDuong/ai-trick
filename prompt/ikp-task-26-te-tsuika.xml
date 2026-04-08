@@ -1,0 +1,363 @@
+<prompt>
+
+  <overview>
+    This prompt defines a full QA workflow including:
+    (1) Generate additional test cases
+    (2) Generate ~100 seed data records
+    (3) Execute all tests (old + new)
+    (4) Regression reporting
+  </overview>
+
+  <phases>
+
+    <!-- ================= PHASE 1 ================= -->
+    <phase id="1">
+      <name>Generate Additional Test Cases</name>
+
+      <instruction>
+        Generate at least 10 new test cases following the given XML structure.
+        Cover modules: User, Article, Comment, Reaction, Bookmark, Notification, Category, Tag.
+        Include:
+        - Positive cases
+        - Negative cases
+        - Boundary cases
+        - Pagination cases (IMPORTANT)
+        - Sorting/filtering cases where applicable
+      </instruction>
+
+      <case_format>
+        <case>
+          <case_id>BE-XX</case_id>
+          <module>ModuleName</module>
+          <type>Positive | Negative | Boundary</type>
+          <description>Description of the test</description>
+          <preconditions>Preconditions required</preconditions>
+          <test_data>{JSON payload}</test_data>
+          <steps>API steps</steps>
+          <expected_result>Expected outcome</expected_result>
+        </case>
+      </case_format>
+
+      <pagination_focus>
+        Ensure test cases include:
+        - page, limit parameters
+        - total, totalPages validation
+        - empty page handling
+        - invalid pagination inputs
+        - sorting + pagination combined
+      </pagination_focus>
+
+      <sample_cases>
+<case>
+  <case_id>BE-31</case_id>
+  <module>Articles</module>
+  <type>Positive</type>
+  <description>Get articles with pagination and sorting by views desc</description>
+  <preconditions>At least 50 articles exist with varying views</preconditions>
+  <test_data>{"page":1,"limit":10,"sort":"views:desc"}</test_data>
+  <steps>GET /api/articles?page=1&limit=10&sort=views:desc</steps>
+  <expected_result>200 OK, top 10 articles with highest views returned in descending order</expected_result>
+</case>
+
+<case>
+  <case_id>BE-32</case_id>
+  <module>Articles</module>
+  <type>Positive</type>
+  <description>Filter articles by status with pagination</description>
+  <preconditions>Multiple articles exist with different statuses</preconditions>
+  <test_data>{"status":"PUBLISHED","page":1,"limit":10}</test_data>
+  <steps>GET /api/articles?status=PUBLISHED&page=1&limit=10</steps>
+  <expected_result>200 OK, only published articles returned with correct pagination</expected_result>
+</case>
+
+<case>
+  <case_id>BE-33</case_id>
+  <module>Articles</module>
+  <type>Boundary</type>
+  <description>Request page beyond available data</description>
+  <preconditions>Only 30 articles exist</preconditions>
+  <test_data>{"page":10,"limit":10}</test_data>
+  <steps>GET /api/articles?page=10&limit=10</steps>
+  <expected_result>200 OK, empty data array with correct pagination metadata</expected_result>
+</case>
+
+<case>
+  <case_id>BE-34</case_id>
+  <module>Comments</module>
+  <type>Positive</type>
+  <description>Get comments of an article with pagination</description>
+  <preconditions>Article has at least 25 comments</preconditions>
+  <test_data>{"articleId":"art_1","page":2,"limit":10}</test_data>
+  <steps>GET /api/comments?articleId=art_1&page=2&limit=10</steps>
+  <expected_result>200 OK, returns comments page 2 correctly</expected_result>
+</case>
+
+<case>
+  <case_id>BE-35</case_id>
+  <module>Comments</module>
+  <type>Positive</type>
+  <description>Get nested replies for a comment</description>
+  <preconditions>Parent comment has multiple replies</preconditions>
+  <test_data>{"parentId":"cmt_1"}</test_data>
+  <steps>GET /api/comments?parentId=cmt_1</steps>
+  <expected_result>200 OK, returns only replies of the parent comment</expected_result>
+</case>
+
+<case>
+  <case_id>BE-36</case_id>
+  <module>Reaction</module>
+  <type>Positive</type>
+  <description>Aggregate reactions count per article</description>
+  <preconditions>Article has multiple reactions of different types</preconditions>
+  <test_data>{"articleId":"art_1"}</test_data>
+  <steps>GET /api/articles/art_1/reactions</steps>
+  <expected_result>200 OK, returns count grouped by LIKE, LOVE, LAUGH</expected_result>
+</case>
+
+<case>
+  <case_id>BE-37</case_id>
+  <module>Reaction</module>
+  <type>Negative</type>
+  <description>User reacts twice to same article</description>
+  <preconditions>User already reacted to the article</preconditions>
+  <test_data>{"articleId":"art_1","type":"LIKE"}</test_data>
+  <steps>POST /api/reactions</steps>
+  <expected_result>Unique constraint violation (400 or 409)</expected_result>
+</case>
+
+<case>
+  <case_id>BE-38</case_id>
+  <module>Bookmark</module>
+  <type>Positive</type>
+  <description>List bookmarks with pagination</description>
+  <preconditions>User has bookmarked at least 20 articles</preconditions>
+  <test_data>{"page":1,"limit":10}</test_data>
+  <steps>GET /api/bookmarks?page=1&limit=10</steps>
+  <expected_result>200 OK, returns paginated bookmarks</expected_result>
+</case>
+
+<case>
+  <case_id>BE-39</case_id>
+  <module>Notification</module>
+  <type>Positive</type>
+  <description>Get unread notifications only</description>
+  <preconditions>User has both read and unread notifications</preconditions>
+  <test_data>{"isRead":false,"page":1,"limit":10}</test_data>
+  <steps>GET /api/notifications?isRead=false</steps>
+  <expected_result>200 OK, only unread notifications returned</expected_result>
+</case>
+
+<case>
+  <case_id>BE-40</case_id>
+  <module>Notification</module>
+  <type>Boundary</type>
+  <description>Mark notifications as read and verify state change</description>
+  <preconditions>At least one unread notification exists</preconditions>
+  <test_data>{"notificationId":"noti_1"}</test_data>
+  <steps>PATCH /api/notifications/noti_1/read</steps>
+  <expected_result>Notification isRead=true after update</expected_result>
+</case>
+
+<case>
+  <case_id>BE-41</case_id>
+  <module>User</module>
+  <type>Positive</type>
+  <description>List users with pagination</description>
+  <preconditions>At least 20 users exist</preconditions>
+  <test_data>{"page":1,"limit":10}</test_data>
+  <steps>GET /api/users?page=1&limit=10</steps>
+  <expected_result>200 OK with paginated user list</expected_result>
+</case>
+
+<case>
+  <case_id>BE-42</case_id>
+  <module>Category</module>
+  <type>Positive</type>
+  <description>Retrieve hierarchical categories</description>
+  <preconditions>Categories exist with parent-child relationships</preconditions>
+  <test_data>{}</test_data>
+  <steps>GET /api/categories</steps>
+  <expected_result>200 OK with nested category structure</expected_result>
+</case>
+
+<case>
+  <case_id>BE-43</case_id>
+  <module>Tag</module>
+  <type>Positive</type>
+  <description>Filter articles by tag</description>
+  <preconditions>Articles are associated with tags</preconditions>
+  <test_data>{"tagId":"tag_1","page":1,"limit":10}</test_data>
+  <steps>GET /api/articles?tagId=tag_1</steps>
+  <expected_result>200 OK, only articles with the given tag returned</expected_result>
+</case>
+
+<case>
+  <case_id>BE-44</case_id>
+  <module>Article</module>
+  <type>Positive</type>
+  <description>Search articles by keyword with pagination</description>
+  <preconditions>Articles exist with searchable titles/content</preconditions>
+  <test_data>{"keyword":"test","page":1,"limit":10}</test_data>
+  <steps>GET /api/articles?search=test&page=1&limit=10</steps>
+  <expected_result>200 OK, matching articles returned with pagination</expected_result>
+</case>
+
+<case>
+  <case_id>BE-45</case_id>
+  <module>ArticleVersion</module>
+  <type>Positive</type>
+  <description>Retrieve version history of an article</description>
+  <preconditions>Article has multiple versions</preconditions>
+  <test_data>{"articleId":"art_1"}</test_data>
+  <steps>GET /api/articles/art_1/versions</steps>
+  <expected_result>200 OK, list of versions in chronological order</expected_result>
+</case>
+
+<case>
+  <case_id>BE-46</case_id>
+  <module>HelpfulnessRating</module>
+  <type>Positive</type>
+  <description>User rates article helpfulness</description>
+  <preconditions>Article and user exist</preconditions>
+  <test_data>{"articleId":"art_1","value":"HELPFUL"}</test_data>
+  <steps>POST /api/helpfulness</steps>
+  <expected_result>Rating saved successfully</expected_result>
+</case>
+
+<case>
+  <case_id>BE-47</case_id>
+  <module>HelpfulnessRating</module>
+  <type>Negative</type>
+  <description>User rates same article twice</description>
+  <preconditions>User already rated the article</preconditions>
+  <test_data>{"articleId":"art_1","value":"NOT_HELPFUL"}</test_data>
+  <steps>POST /api/helpfulness</steps>
+  <expected_result>Unique constraint violation</expected_result>
+</case>
+
+<case>
+  <case_id>BE-48</case_id>
+  <module>Reaction</module>
+  <type>Boundary</type>
+  <description>Switch reaction type for same article</description>
+  <preconditions>User already reacted with LIKE</preconditions>
+  <test_data>{"articleId":"art_1","type":"LOVE"}</test_data>
+  <steps>PUT /api/reactions (update existing reaction)</steps>
+  <expected_result>Reaction updated from LIKE to LOVE</expected_result>
+</case>
+
+<case>
+  <case_id>BE-49</case_id>
+  <module>Articles</module>
+  <type>Boundary</type>
+  <description>Article with maximum content size</description>
+  <preconditions>System supports large JSON content</preconditions>
+  <test_data>{"title":"Large Article","content":["Very long text... repeated"],"categoryId":"cat_1"}</test_data>
+  <steps>POST /api/articles</steps>
+  <expected_result>201 Created without truncation or error</expected_result>
+</case>
+
+<case>
+  <case_id>BE-50</case_id>
+  <module>Comments</module>
+  <type>Negative</type>
+  <description>Create comment with invalid articleId</description>
+  <preconditions>N/A</preconditions>
+  <test_data>{"articleId":"invalid_id","content":"Test"}</test_data>
+  <steps>POST /api/comments</steps>
+  <expected_result>400 Bad Request or foreign key violation</expected_result>
+</case>
+      </sample_cases>
+
+    </phase>
+
+    <!-- ================= PHASE 2 ================= -->
+    <phase id="2">
+      <name>Generate Test Data (~100 records)</name>
+
+      <instruction>
+        Generate approximately 100 records across all entities while ensuring referential integrity.
+      </instruction>
+
+      <distribution>
+        Users: 10-15 records
+        Categories: 10-15 records (hierarchical)
+        Articles: 30-40 records
+        Tags: 10-20 records
+        Comments: 20-30 records (including nested)
+        Reactions: 20-30 records
+        Bookmarks: 15-25 records
+        Notifications: generated from interactions
+      </distribution>
+
+      <rules>
+        - All foreign keys must be valid
+        - Use realistic IDs
+        - Ensure variety in:
+          - Article status (DRAFT, PUBLISHED, ARCHIVED)
+          - Reaction types (LIKE, LOVE, LAUGH)
+          - User roles (AUTHOR, EDITOR, VIEWER)
+        - Include edge scenarios:
+          - Articles without tags
+          - Users with no activity
+          - Articles with high interaction counts
+      </rules>
+
+    </phase>
+
+    <!-- ================= PHASE 3 ================= -->
+    <phase id="3">
+      <name>Execute Full Test Suite</name>
+
+      <instruction>
+        Execute all test cases (existing + newly generated) against the seeded database.
+      </instruction>
+
+      <steps>
+        1. Initialize database with generated seed data
+        2. Run each test case sequentially
+        3. Validate:
+           - API response status
+           - Response payload
+           - Database state changes
+           - Constraints (unique, foreign keys)
+        4. Capture actual vs expected results
+      </steps>
+
+      <validation_criteria>
+        - HTTP status correctness
+        - Data integrity
+        - Pagination correctness (data length, metadata)
+        - Sorting/filtering correctness
+        - Constraint violations handling
+      </validation_criteria>
+
+    </phase>
+
+    <!-- ================= PHASE 4 ================= -->
+    <phase id="4">
+      <name>Regression Summary & Reporting</name>
+
+      <instruction>
+        Summarize execution results of all test cases.
+      </instruction>
+
+      <report_requirements>
+        - Total test cases executed
+        - Passed / Failed counts
+        - Failure categorization by module
+        - Root cause analysis
+        - Performance or data issues (if any)
+      </report_requirements>
+
+      <output_format>
+        - Summary table
+        - List of failed cases with details
+        - Recommendations for fixes
+      </output_format>
+
+    </phase>
+
+  </phases>
+
+</prompt>

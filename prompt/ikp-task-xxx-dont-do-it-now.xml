@@ -1,0 +1,159 @@
+<task id="database-production-hardening">
+  <context>
+    <description>
+      The current database schema for the article system is functional and supports core features
+      (articles, categories, comments, tags, helpfulness voting, and versioning).
+      However, several improvements are required to ensure data consistency, scalability,
+      and production readiness.
+    </description>
+  </context>
+
+  <objectives>
+    <objective>Ensure data consistency at database level</objective>
+    <objective>Improve query performance</objective>
+    <objective>Support future feature scalability</objective>
+    <objective>Align schema with real-world production requirements</objective>
+  </objectives>
+
+  <tasks>
+
+    <!-- ARTICLE IMPROVEMENTS -->
+    <task>
+      <title>Enforce publishedAt consistency</title>
+      <requirements>
+        <requirement>
+          Add a CHECK constraint to ensure:
+          - publishedAt is NOT NULL when status = 'PUBLISHED'
+          - publishedAt can be NULL otherwise
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add composite index for article queries</title>
+      <requirements>
+        <requirement>
+          Create index on (status, publishedAt DESC) to optimize common queries:
+          WHERE status = 'PUBLISHED' ORDER BY publishedAt DESC
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add partial index for published articles</title>
+      <requirements>
+        <requirement>
+          Create a partial index for published articles only:
+          WHERE status = 'PUBLISHED'
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add missing article fields</title>
+      <requirements>
+        <requirement>Add slug (UNIQUE) for SEO-friendly URLs</requirement>
+        <requirement>Add excerpt for preview content</requirement>
+        <requirement>Add deletedAt for soft delete support</requirement>
+      </requirements>
+    </task>
+
+    <!-- USER IMPROVEMENTS -->
+    <task>
+      <title>Enhance user model</title>
+      <requirements>
+        <requirement>Add user status (ACTIVE, DISABLED, BANNED)</requirement>
+        <requirement>Add lastLoginAt timestamp</requirement>
+        <requirement>Add avatarUrl field (optional)</requirement>
+      </requirements>
+    </task>
+
+    <!-- ARTICLE VERSION -->
+    <task>
+      <title>Improve versioning system</title>
+      <requirements>
+        <requirement>Add version number field</requirement>
+        <requirement>Add titleSnapshot field</requirement>
+      </requirements>
+    </task>
+
+    <!-- COMMENT -->
+    <task>
+      <title>Improve comment system</title>
+      <requirements>
+        <requirement>Add deletedAt for soft delete</requirement>
+        <requirement>Ensure threaded comments remain consistent after deletion</requirement>
+      </requirements>
+    </task>
+
+    <!-- HELPFULNESS -->
+    <task>
+      <title>Enhance helpfulness rating</title>
+      <requirements>
+        <requirement>Add updatedAt to support vote changes</requirement>
+      </requirements>
+    </task>
+
+    <!-- PERFORMANCE & SCALING -->
+    <task>
+      <title>Optimize category hierarchy</title>
+      <requirements>
+        <requirement>Add optional path or level fields for faster tree queries</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add tag usage tracking</title>
+      <requirements>
+        <requirement>Add usageCount field to Tag table</requirement>
+      </requirements>
+    </task>
+
+    <!-- NEW FEATURES SUPPORT -->
+    <task>
+      <title>Add bookmark feature</title>
+      <requirements>
+        <requirement>Create Bookmark table (userId, articleId, createdAt)</requirement>
+        <requirement>Add unique constraint (userId, articleId)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add audit log</title>
+      <requirements>
+        <requirement>
+          Create AuditLog table with:
+          - userId
+          - action
+          - entityType
+          - entityId
+          - createdAt
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Improve view tracking</title>
+      <requirements>
+        <requirement>
+          Optionally create ArticleView table to track real views
+          (articleId, userId, viewedAt)
+        </requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Database enforces consistency rules for published articles</criteria>
+    <criteria>Common queries are optimized with proper indexes</criteria>
+    <criteria>Schema supports soft delete and future features</criteria>
+    <criteria>No breaking changes to existing core functionality</criteria>
+  </acceptance_criteria>
+
+  <notes>
+    <note>Prefer non-breaking migrations where possible</note>
+    <note>Ensure backward compatibility with existing data</note>
+    <note>Follow existing naming conventions</note>
+  </notes>
+</task>

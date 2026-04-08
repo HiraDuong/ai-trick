@@ -1,0 +1,122 @@
+<task id="fix-tag-filtering-bug">
+
+  <context>
+    <description>
+      The system supports tagging articles and allows users to click on a tag
+      to view related articles. However, the current behavior is inconsistent.
+    </description>
+  </context>
+
+  <problem>
+
+    <summary>
+      Clicking on certain tags does not return expected articles,
+      even though those articles are correctly associated with the tag.
+    </summary>
+
+    <details>
+      <issue>
+        Some tags work correctly and return articles.
+      </issue>
+      <issue>
+        Some tags (e.g. "#empty-state") return no results,
+        even though there are articles linked to that tag.
+      </issue>
+      <issue>
+        This indicates inconsistency between tag data and search/filter logic.
+      </issue>
+    </details>
+
+    <expected_behavior>
+      Clicking on any tag should return all articles associated with that tag.
+    </expected_behavior>
+
+    <actual_behavior>
+      Certain tags return empty results incorrectly.
+    </actual_behavior>
+
+  </problem>
+
+  <possible_causes>
+
+    <cause>
+      Tag name normalization issues (e.g. "#empty-state" vs "empty-state")
+    </cause>
+
+    <cause>
+      Case sensitivity mismatch (e.g. "Tag" vs "tag")
+    </cause>
+
+    <cause>
+      Search query incorrectly filtering by tag name instead of tagId
+    </cause>
+
+    <cause>
+      Missing JOIN between Article, ArticleTag, and Tag tables
+    </cause>
+
+    <cause>
+      Frontend sending incorrect query parameter (slug vs name mismatch)
+    </cause>
+
+  </possible_causes>
+
+  <tasks>
+
+    <task>
+      <title>Verify database integrity</title>
+      <requirements>
+        <requirement>Check that ArticleTag records exist for the affected tag</requirement>
+        <requirement>Ensure tag names are stored consistently (no leading '#')</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Fix backend query logic</title>
+      <requirements>
+        <requirement>Ensure filtering is done by tagId instead of tag name when possible</requirement>
+        <requirement>Ensure correct JOIN between Article, ArticleTag, and Tag</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Normalize tag input</title>
+      <requirements>
+        <requirement>Strip leading '#' from tag input</requirement>
+        <requirement>Normalize case (e.g. lowercase)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Fix frontend behavior</title>
+      <requirements>
+        <requirement>Ensure correct tag identifier is sent in API request</requirement>
+        <requirement>Ensure consistent routing (e.g. /tags/[tag])</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add debugging and logging</title>
+      <requirements>
+        <requirement>Log incoming tag query</requirement>
+        <requirement>Log number of matched articles</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add test cases</title>
+      <requirements>
+        <requirement>Test tags with special characters (e.g. hyphen, #)</requirement>
+        <requirement>Test case-insensitive matching</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>All tags return correct associated articles</criteria>
+    <criteria>No inconsistency between tags</criteria>
+    <criteria>Tags with special characters work correctly</criteria>
+  </acceptance_criteria>
+
+</task>

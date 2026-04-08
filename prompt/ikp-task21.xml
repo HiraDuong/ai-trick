@@ -1,0 +1,28 @@
+<task id="21-notification-system">
+
+  <database>
+    Notification (
+      id,
+      userId,
+      type,
+      entityId,
+      isRead,
+      createdAt
+    )
+  </database>
+
+  <backend>
+    <api>
+      <endpoint>GET /notifications</endpoint>
+      <endpoint>PATCH /notifications/:id/read</endpoint>
+    </api>
+  </backend>
+
+  <frontend>
+    <ui>
+      <component>Notification Bell</component>
+      <dropdown>List notifications</dropdown>
+    </ui>
+  </frontend>
+
+</task>

@@ -1,0 +1,38 @@
+<task id="task-8-article-helpfulness" phase="phase-3" name="Article Helpfulness">
+  <objective>
+    Implement helpfulness rating system for articles.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Mark article as helpful</item>
+    <item>Mark article as not helpful</item>
+    <item>Aggregate helpfulness counts</item>
+  </scope>
+
+  <requirements>
+    <requirement>One vote per user per article</requirement>
+    <requirement>Prevent duplicate votes</requirement>
+    <requirement>Allow updating existing vote</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Authenticated users only</rule>
+    <rule>Do not implement comment helpfulness</rule>
+  </rules>
+
+  <outputs>
+    <file>helpfulness.repository.js</file>
+    <file>helpfulness.service.js</file>
+    <file>helpfulness.controller.js</file>
+    <file>helpfulness.routes.js</file>
+  </outputs>
+
+  <acceptance>
+    <criteria>User cannot vote multiple times without updating</criteria>
+    <criteria>Aggregated counts are accurate</criteria>
+  </acceptance>
+</task>

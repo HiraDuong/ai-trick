@@ -1,0 +1,31 @@
+<task id="task-6-article-detail" phase="phase-2" name="Article Detail Optimization">
+  <objective>
+    Optimize article detail response for frontend consumption.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Enhance article detail endpoint</item>
+    <item>Include related entities</item>
+  </scope>
+
+  <requirements>
+    <requirement>Include author basic info</requirement>
+    <requirement>Include tags</requirement>
+    <requirement>Include category</requirement>
+    <requirement>Use select to minimize payload</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Avoid N+1 queries</rule>
+    <rule>Do not return unnecessary fields</rule>
+  </rules>
+
+  <acceptance>
+    <criteria>Single query returns full article detail</criteria>
+    <criteria>Response is optimized for frontend use</criteria>
+  </acceptance>
+</task>

@@ -1,0 +1,32 @@
+<task id="15-article-stats">
+
+  <objective>
+    Display aggregated statistics for each article.
+  </objective>
+
+  <backend>
+    <api>
+      <endpoint>GET /articles/:id/stats</endpoint>
+      <response>
+        {
+          "views": 120,
+          "comments": 15,
+          "helpful": 10,
+          "notHelpful": 2
+        }
+      </response>
+    </api>
+  </backend>
+
+  <frontend>
+    <ui>
+      <component>Stats Panel</component>
+      <elements>
+        <element>👁 Views</element>
+        <element>💬 Comments</element>
+        <element>👍 Helpfulness</element>
+      </elements>
+    </ui>
+  </frontend>
+
+</task>

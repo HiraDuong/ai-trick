@@ -1,0 +1,91 @@
+<task id="detect-and-resolve-duplicates">
+
+  <context>
+    <description>
+      The project has multiple feature tasks implemented or in progress.
+      Some logic may be duplicated across tasks (e.g. stats, comments, notifications),
+      causing inconsistency and maintenance issues.
+    </description>
+  </context>
+
+  <objectives>
+    <objective>Detect duplicate or overlapping logic</objective>
+    <objective>Unify implementation into a single source of truth</objective>
+    <objective>Prevent redundant APIs and database structures</objective>
+  </objectives>
+
+  <tasks>
+
+    <!-- DETECTION -->
+    <task>
+      <title>Scan for duplicate logic</title>
+      <requirements>
+        <requirement>Check if multiple APIs update the same data (e.g. stats)</requirement>
+        <requirement>Check if similar database tables exist for same purpose</requirement>
+        <requirement>Check if frontend duplicates logic already handled by backend</requirement>
+      </requirements>
+    </task>
+
+    <!-- SPECIFIC CHECKS -->
+    <task>
+      <title>Validate known overlap areas</title>
+      <requirements>
+
+        <requirement>
+          Ensure article statistics are NOT manually updated via separate APIs
+          (stats must be derived from Comment and HelpfulnessRating tables)
+        </requirement>
+
+        <requirement>
+          Ensure comment system is the ONLY source of comment count
+        </requirement>
+
+        <requirement>
+          Ensure notification system listens to events (comment, reply)
+          instead of duplicating comment logic
+        </requirement>
+
+        <requirement>
+          Ensure reactions and helpfulness are not duplicated systems
+          unless intentionally separated
+        </requirement>
+
+      </requirements>
+    </task>
+
+    <!-- FIX -->
+    <task>
+      <title>Refactor and unify logic</title>
+      <requirements>
+        <requirement>Remove redundant APIs</requirement>
+        <requirement>Merge duplicate database structures</requirement>
+        <requirement>Ensure each feature has a single source of truth</requirement>
+      </requirements>
+    </task>
+
+    <!-- REPORT -->
+    <task>
+      <title>Generate report</title>
+      <requirements>
+        <requirement>List all detected duplicates</requirement>
+        <requirement>Explain why they are problematic</requirement>
+        <requirement>Describe how they were resolved</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>No duplicate APIs for same functionality</criteria>
+    <criteria>No redundant database tables</criteria>
+    <criteria>All derived data comes from a single source</criteria>
+    <criteria>Codebase is simplified and consistent</criteria>
+  </acceptance_criteria>
+
+  <notes>
+    <note>Prefer refactoring over adding new logic</note>
+    <note>Do not break existing functionality</note>
+    <note>Maintain backward compatibility where possible</note>
+  </notes>
+
+</task>

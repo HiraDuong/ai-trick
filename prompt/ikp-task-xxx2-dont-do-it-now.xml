@@ -1,0 +1,175 @@
+<task id="full-project-production-ready">
+
+  <context>
+    <description>
+      The project currently has core features implemented (articles, engagement, comments),
+      but still contains development artifacts, missing authentication flow, inconsistent database rules,
+      and requires multiple manual steps to run.
+
+      The goal is to transform the project into a clean, production-ready, and easy-to-run system.
+    </description>
+  </context>
+
+  <objectives>
+    <objective>Enable full end-to-end functionality</objective>
+    <objective>Remove all development-only artifacts</objective>
+    <objective>Ensure database consistency and scalability</objective>
+    <objective>Implement proper authentication flow</objective>
+    <objective>Provide a single-command startup experience</objective>
+  </objectives>
+
+  <tasks>
+
+    <!-- ========================= -->
+    <!-- 1. SEED DATA -->
+    <!-- ========================= -->
+    <task>
+      <title>Seed data for testing</title>
+      <requirements>
+        <requirement>Create at least one published article</requirement>
+        <requirement>Add helpfulness votes (both helpful and not helpful)</requirement>
+        <requirement>Create reusable seed script</requirement>
+        <requirement>Add command: pnpm seed:engagement</requirement>
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 2. AUTH SYSTEM -->
+    <!-- ========================= -->
+    <task>
+      <title>Implement authentication flow</title>
+      <requirements>
+        <requirement>Create login page (/login)</requirement>
+        <requirement>Call backend auth API and retrieve JWT</requirement>
+        <requirement>Store token in localStorage</requirement>
+        <requirement>Attach Authorization header automatically</requirement>
+        <requirement>Remove manual JWT input UI completely</requirement>
+        <requirement>Show "Log in to interact" if not authenticated</requirement>
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 3. DEV STARTUP SCRIPT -->
+    <!-- ========================= -->
+    <task>
+      <title>Create unified dev startup</title>
+      <requirements>
+        <requirement>Create single command to start FE + BE + DB</requirement>
+        <requirement>Load environment variables from .env</requirement>
+        <requirement>Run services concurrently</requirement>
+        <requirement>Add script: pnpm dev</requirement>
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 4. DATABASE HARDENING -->
+    <!-- ========================= -->
+    <task>
+      <title>Fix database consistency and performance</title>
+      <requirements>
+
+        <!-- Article -->
+        <requirement>Add CHECK constraint for publishedAt consistency</requirement>
+        <requirement>Add composite index (status, publishedAt DESC)</requirement>
+        <requirement>Add partial index for published articles</requirement>
+        <requirement>Add fields: slug, excerpt, deletedAt</requirement>
+
+        <!-- User -->
+        <requirement>Add fields: status, lastLoginAt, avatarUrl</requirement>
+
+        <!-- Version -->
+        <requirement>Add version number and titleSnapshot</requirement>
+
+        <!-- Comment -->
+        <requirement>Add deletedAt for soft delete</requirement>
+
+        <!-- Helpfulness -->
+        <requirement>Add updatedAt field</requirement>
+
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 5. UI CLEANUP -->
+    <!-- ========================= -->
+    <task>
+      <title>Remove development artifacts and improve UI</title>
+      <requirements>
+
+        <!-- Remove dev UI -->
+        <requirement>Remove all references to access tokens, JWT, debug info</requirement>
+        <requirement>Remove messages like "Votes are submitted automatically"</requirement>
+        <requirement>Remove test labels and placeholder developer text</requirement>
+
+        <!-- Replace UX -->
+        <requirement>Replace empty states with user-friendly messages</requirement>
+        <requirement>Show "Be the first to comment" or "Log in to comment"</requirement>
+
+        <!-- Code cleanup -->
+        <requirement>Remove console.log and debug code</requirement>
+        <requirement>Remove commented-out code</requirement>
+
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 6. UI/UX FIXES -->
+    <!-- ========================= -->
+    <task>
+      <title>Fix UI/UX and CSS issues</title>
+      <requirements>
+
+        <!-- Layout -->
+        <requirement>Fix spacing inconsistencies (padding, margin)</requirement>
+        <requirement>Align components properly</requirement>
+
+        <!-- Typography -->
+        <requirement>Ensure consistent font sizes and hierarchy</requirement>
+        <requirement>Improve readability (line height, spacing)</requirement>
+
+        <!-- Buttons -->
+        <requirement>Add hover, active, disabled states</requirement>
+        <requirement>Prevent spam clicking</requirement>
+
+        <!-- Responsive -->
+        <requirement>Ensure mobile/tablet compatibility</requirement>
+        <requirement>Fix overflow issues</requirement>
+
+        <!-- States -->
+        <requirement>Add loading states (spinner/skeleton)</requirement>
+        <requirement>Add error handling UI</requirement>
+
+      </requirements>
+    </task>
+
+    <!-- ========================= -->
+    <!-- 7. FINAL VERIFICATION -->
+    <!-- ========================= -->
+    <task>
+      <title>End-to-end verification</title>
+      <requirements>
+        <requirement>User can log in</requirement>
+        <requirement>Article page loads with real data</requirement>
+        <requirement>Voting works correctly</requirement>
+        <requirement>Comments UI behaves correctly</requirement>
+        <requirement>No debug text appears in UI</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Project runs with a single command</criteria>
+    <criteria>No development artifacts remain in UI</criteria>
+    <criteria>Authentication works properly</criteria>
+    <criteria>Database enforces consistency</criteria>
+    <criteria>UI is clean, responsive, and user-friendly</criteria>
+  </acceptance_criteria>
+
+  <notes>
+    <note>Prefer minimal and clean implementation</note>
+    <note>Do not break existing features</note>
+    <note>Ensure backward compatibility with existing data</note>
+  </notes>
+
+</task>

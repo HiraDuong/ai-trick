@@ -1,0 +1,24 @@
+<task id="18-draft-autosave">
+
+  <objective>
+    Automatically save drafts periodically.
+  </objective>
+
+  <frontend>
+    <logic>
+      Auto-save every 5–10 seconds
+    </logic>
+
+    <ui>
+      <indicator>Saving...</indicator>
+      <indicator>Saved</indicator>
+    </ui>
+  </frontend>
+
+  <backend>
+    <api>
+      <endpoint>PATCH /articles/:id</endpoint>
+    </api>
+  </backend>
+
+</task>

@@ -1,0 +1,31 @@
+<task id="task-5-article-publishing" phase="phase-2" name="Article Publishing Lifecycle">
+  <objective>
+    Extend article system with publish and unpublish capabilities.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Publish article</item>
+    <item>Unpublish article</item>
+  </scope>
+
+  <requirements>
+    <requirement>Set publishedAt when publishing</requirement>
+    <requirement>Clear publishedAt when unpublishing</requirement>
+    <requirement>Published articles appear in public APIs</requirement>
+    <requirement>Draft articles remain private</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Only the author can publish/unpublish their own articles</rule>
+    <rule>Do not break existing CRUD endpoints</rule>
+  </rules>
+
+  <acceptance>
+    <criteria>Published articles are visible in list API</criteria>
+    <criteria>Draft articles are hidden from public queries</criteria>
+  </acceptance>
+</task>
