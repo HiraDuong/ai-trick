@@ -1,0 +1,59 @@
+Task 29: fix studio access guard mismatch for editor role
+
+Scope
+- Frontend route guards for /studio
+- Frontend draft studio component guard
+- Backend article and version authorization used by studio edit flows
+
+Observed mismatch
+- Frontend server guard allowed only AUTHOR for /studio.
+- Frontend client guard in DraftStudio also allowed only AUTHOR.
+- Backend article management and version management still returned AUTHOR-only 403 messages.
+- Proxy only blocked missing-token requests, so VIEWER requests depended on the slower page redirect path.
+
+Policy reference used for alignment
+- prompt/ikp-master-context.xml states:
+  - Author: manage own articles
+  - Editor: manage all content
+  - Viewer: read-only
+
+Root cause
+- The studio access policy was duplicated across layers and never updated consistently when the route hardening work was added.
+- Backend edit services still reflected the older AUTHOR-only assumption.
+- Proxy enforcement was authentication-only, not role-aware for /studio.
+
+Code changes applied
+- Added shared frontend studio role helper in apps/frontend/src/lib/studio-access.ts.
+- Added requireStudioUser in apps/frontend/src/lib/server-auth.ts and switched apps/frontend/src/app/studio/page.tsx to use it.
+- Updated apps/frontend/src/components/studio/draft-studio.tsx to use shared AUTHOR or EDITOR access logic and updated user-facing messages.
+- Added shared backend studio access helper in apps/backend/src/utils/studio-access.utils.ts.
+- Updated apps/backend/src/services/article.service.ts so:
+  - AUTHOR or EDITOR can manage article edit flows
+  - AUTHOR remains limited to own drafts
+  - EDITOR can manage all content per policy
+  - draft listing returns own drafts for AUTHOR and all drafts for EDITOR
+- Updated apps/backend/src/services/version.service.ts with the same AUTHOR or EDITOR rule for version history and restore flows.
+- Updated apps/frontend/src/proxy.ts to decode JWT payload role for /studio and redirect VIEWER away before render, while keeping /bookmarks auth-only.
+
+Validation performed
+- Source diagnostics: no errors in edited frontend or backend files.
+- Runtime matrix after reload:
+  - unauthenticated /studio -> 307 /login?redirectTo=%2Fstudio
+  - author /studio -> 200
+  - editor /studio -> 200
+  - viewer /studio -> 307 /
+- Backend edit flow verification:
+  - author created a draft successfully
+  - editor listed drafts successfully
+  - editor updated the author-owned draft successfully
+  - editor fetched draft version history successfully
+
+Validation notes
+- A dedicated editor test account was provisioned in the dev database for verification:
+  - seed.editor@ikp.local / Hackathon123!
+- Existing reviewer seed remains VIEWER and was used to verify unauthorized redirect behavior.
+
+Resolution summary
+- The studio access mismatch is fixed.
+- Frontend and backend now align with Cluster 2 policy for AUTHOR and EDITOR edit flows.
+- VIEWER and unauthenticated users remain blocked appropriately.

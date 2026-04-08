@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthUserDto, CurrentUserResponseDto } from "./api-types";
 import { ACCESS_TOKEN_COOKIE_NAME } from "./auth";
+import { hasStudioAccessUser } from "./studio-access";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000/api";
 
@@ -54,6 +55,15 @@ export async function requireAuthenticatedUser(redirectTo: string): Promise<Auth
 export async function requireAuthorUser(redirectTo: string): Promise<AuthUserDto> {
   const user = await requireAuthenticatedUser(redirectTo);
   if (user.role !== "AUTHOR") {
+    redirect("/");
+  }
+
+  return user;
+}
+
+export async function requireStudioUser(redirectTo: string): Promise<AuthUserDto> {
+  const user = await requireAuthenticatedUser(redirectTo);
+  if (!hasStudioAccessUser(user)) {
     redirect("/");
   }
 
