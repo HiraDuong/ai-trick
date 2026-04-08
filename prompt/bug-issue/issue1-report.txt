@@ -1,0 +1,60 @@
+task 27 : fix 
+
+Tôi sẽ đọc task mới và đối chiếu ngay với phần auth hardening hiện tại, rồi patch đúng chỗ còn thiếu thay vì đoán rộng.
+
+Tôi đã xác định root cause: studio và bookmarks đúng là chỉ chặn sau hydration. Tôi đang đọc nốt auth flow hiện tại để chuyển nó sang server-readable cookie guard mà không phá login client đang chạy.
+
+Tôi đã chốt hướng fix: không đụng backend auth vì middleware đang ổn, mà vá đúng bug ở frontend bằng server-readable auth cookie cộng với server-side redirects cho bookmarks, studio, và login. Sau patch tôi sẽ verify lại bằng request không token để chắc rằng route protected không còn lộ shell trước hydration.
+
+Patch đã vào phần guard. Tôi đang chạy diagnostics và request-level checks để xác nhận hai route protected giờ redirect ở server thay vì đợi client hydrate.
+
+Diagnostics sạch, nhưng HEAD trên Next dev chưa đủ để kết luận redirect. Tôi sẽ đọc response body thật của /bookmarks và /studio để xác nhận chúng đang render login redirect hay vẫn render protected shell.
+
+Tôi đang mở đúng body response và log dev server để xác minh redirect thực tế, không chỉ dựa vào status code.
+
+Compacted conversation
+
+Xác minh runtime cho thấy redirect marker đã xuất hiện, nhưng dev server đang báo thiếu module @/lib/server-auth. Tôi kiểm tra trực tiếp cây file frontend rồi vá dứt điểm nếu file mới chưa được tạo.
+
+Tôi đã xác nhận file mới thực sự có trong workspace. Vấn đề còn lại là cách redirect hiện tại của App Router vẫn stream layout rồi chèn NEXT_REDIRECT, nên để chặn sớm hơn tôi sẽ thêm middleware guard ở frontend và giữ server-side validation làm lớp kiểm tra thật.
+
+Tôi kiểm tra đúng tài liệu Next trong repo trước khi sửa middleware, vì project này có rule riêng yêu cầu dựa trên docs đang cài.
+
+Docs trong bản Next này dùng proxy.ts thay cho tên cũ middleware.ts. Tôi sẽ thêm proxy.ts ở root frontend để coarse-block /studio và /bookmarks bằng cookie presence trước khi render, còn page-level server auth vẫn xác thực token thật qua backend.
+
+Tôi đang cân nhắc mức guard ở Proxy. Nếu backend dùng JWT tiêu chuẩn thì tôi có thể verify token ngay trong frontend Proxy để chặn cả token rác và role sai trước khi render, thay vì chỉ check “cookie có tồn tại”.
+
+Kế hoạch còn lại:
+
+Thêm proxy.ts đúng convention của Next 16 để coarse-guard /studio và /bookmarks.
+Chạy diagnostics và request-level verification để xác nhận route trả redirect trước render.
+Nếu cần, restart dev stack để Next nạp file convention mới rồi kiểm tra lại.
+Created 3 todos
+
+Tôi đang thêm src/proxy.ts. Nó chỉ làm optimistic cookie check theo đúng hướng dẫn Next: chặn sớm route protected khi không có token, còn việc xác thực token thật và role vẫn giữ ở server component/helper.
+
+Diagnostics sạch. Tôi sẽ restart dev stack một lần để Next nạp file convention proxy.ts, rồi kiểm tra lại response thực tế của /bookmarks và /studio ở trạng thái chưa login.
+
+Stack đã lên lại. Tôi đang chạy request-level check để xác nhận response giờ là redirect thật từ Proxy, không còn kiểu 200 + NEXT_REDIRECT cho user chưa đăng nhập.
+
+Tôi thêm một round bypass test ngắn ở backend để đóng task 27 đúng nghĩa: kiểm tra 401 khi không token và 403 khi token hợp lệ nhưng sai quyền.
+
+Request 401 đã đúng. Tôi đang rerun case 403 bằng PowerShell body chuẩn, vì lần đầu bị lỗi escape JSON nên backend trả 400 parser error chứ chưa chạm authorization layer.
+
+Tôi đã có đủ verification: frontend protected routes trả 307 trước render, và backend vẫn trả 401/403 cho bypass cases. Tôi ghi lại một note repo ngắn để lần sau không lặp lại lỗi convention proxy.ts của Next 16.
+
+Auth hardening is fixed.
+
+Frontend protection now has two layers: optimistic pre-render blocking in proxy.ts, plus server-side token validation in server-auth.ts used by page.tsx, page.tsx, and page.tsx. The token is also mirrored into a cookie in auth.ts so server-side checks can read it.
+
+Verification is clean. Unauthenticated requests now return real redirect responses before render:
+
+/bookmarks → 307 to /login?redirectTo=%2Fbookmarks
+/studio → 307 to /login?redirectTo=%2Fstudio
+Backend enforcement also still holds, so this was a frontend hardening gap rather than an API auth bypass:
+
+GET /api/bookmarks without token → 401
+POST /api/articles with a viewer token → 403
+The dev stack is running again on localhost:3000 and localhost:5000. If you want, I can do one next step:
+
+Commit and push this auth-hardening fix separately.

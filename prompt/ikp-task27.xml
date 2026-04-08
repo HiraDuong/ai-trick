@@ -1,0 +1,101 @@
+<task>
+  <title>Verify & Harden Authentication (Frontend Route Guards + Backend Enforcement Audit)</title>
+  <description>
+    Audit the current authentication and authorization implementation across both frontend and backend to ensure:
+    - Frontend only handles UX-level route/page protection
+    - Backend enforces real security for all API endpoints
+    - No possibility of bypassing restrictions via direct API calls
+  </description>
+
+  <objectives>
+    <objective>Verify whether protected routes on the frontend have server-side route guards (Next.js middleware or server-side redirects)</objective>
+    <objective>Identify places where authentication is only checked on the client after hydration</objective>
+    <objective>Audit backend APIs to ensure all sensitive endpoints are protected by authentication middleware</objective>
+    <objective>Confirm that tokens/sessions are validated on every backend request</objective>
+    <objective>Classify findings as UX hardening issues vs actual security vulnerabilities</objective>
+  </objectives>
+
+  <scope>
+    <frontend>
+      <files>
+        <file>apps/frontend/app/**/page.tsx</file>
+        <file>apps/frontend/**/draft-studio.tsx</file>
+        <file>apps/frontend/**/bookmarks-view.tsx</file>
+        <file>apps/frontend/auth.ts</file>
+      </files>
+    </frontend>
+
+    <backend>
+      <files>
+        <file>apps/backend/**/routes/**/*.ts</file>
+        <file>apps/backend/**/middleware/**/*.ts</file>
+        <file>apps/backend/**/index.ts</file>
+      </files>
+    </backend>
+  </scope>
+
+  <acceptance_criteria>
+    <criterion>No protected frontend route relies solely on client-side guards for controlling access to sensitive data</criterion>
+    <criterion>All sensitive backend API endpoints require authentication middleware (e.g., authenticateUser)</criterion>
+    <criterion>Direct API calls cannot bypass UI restrictions</criterion>
+    <criterion>Protected routes implement server-side redirect or guard logic (middleware or server components)</criterion>
+    <criterion>Each request is validated using token/session on the backend</criterion>
+  </acceptance_criteria>
+
+  <tasks>
+    <task id="T1">
+      <name>Frontend Route Guard Audit</name>
+      <steps>
+        <step>Review all protected pages in page.tsx files</step>
+        <step>Identify where authentication checks are performed (client vs server)</step>
+        <step>Confirm auth checks in draft-studio.tsx and bookmarks-view.tsx occur after hydration</step>
+        <step>Check whether Next.js middleware or server-side redirect mechanisms exist</step>
+      </steps>
+    </task>
+
+    <task id="T2">
+      <name>Backend Authentication Enforcement Audit</name>
+      <steps>
+        <step>Review all backend routes</step>
+        <step>Verify sensitive routes (bookmarks, versions, notifications, articles, comments, reactions) include authenticateUser middleware</step>
+        <step>Ensure proper request flow: request → middleware → handler</step>
+        <step>Confirm backend validates token/session independently of frontend</step>
+      </steps>
+    </task>
+
+    <task id="T3">
+      <name>Bypass Testing</name>
+      <steps>
+        <step>Send direct API requests using Postman/curl without a token</step>
+        <step>Send requests with valid token but insufficient role/permissions</step>
+        <step>Verify backend responds with correct HTTP status codes (401/403)</step>
+      </steps>
+    </task>
+
+    <task id="T4">
+      <name>Issue Classification</name>
+      <steps>
+        <step>Categorize findings into:
+          - UX Hardening Issues (frontend-only protections)
+          - Security Issues (backend enforcement gaps)
+        </step>
+        <step>Assess severity (low / medium / high)</step>
+      </steps>
+    </task>
+
+    <task id="T5">
+      <name>Recommendation & Improvement Plan</name>
+      <steps>
+        <step>Propose migrating from localStorage-based auth to cookie-based or server-readable sessions</step>
+        <step>Introduce Next.js middleware or server-side redirects for protected routes</step>
+        <step>Standardize route guard patterns across the frontend</step>
+      </steps>
+    </task>
+  </tasks>
+
+  <notes>
+    <note>Frontend guards are for UX only and do not provide real security</note>
+    <note>Backend authentication middleware is the primary security layer</note>
+    <note>LocalStorage-based tokens cannot be reliably used for server-side route protection</note>
+  </notes>
+</task>

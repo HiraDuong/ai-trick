@@ -53,7 +53,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           Log in to vote and keep track of your article feedback.
         </h1>
         <p className="text-base leading-8 text-[var(--color-muted)] sm:text-lg">
-          Use the backend auth API credentials. After a successful login, the app stores your access token locally and returns you to the page you came from.
+          Use the backend auth API credentials. After a successful login, the app stores your access token for client requests and server-side protected page checks, then returns you to the page you came from.
         </p>
       </div>
 
