@@ -1,0 +1,89 @@
+<task id="task-28-check-article-feature-breakdown-completeness">
+
+  <objective>
+    Evaluate Tasks 1–3 to determine whether they are complete, consistent, and sufficient to implement the article feature end-to-end without missing critical parts.
+  </objective>
+
+  <inputs>
+    <item>Task 1: Backend - Repositories & Services</item>
+    <item>Task 2: Backend - Controllers & Routes</item>
+    <item>Task 3: Frontend - UI Components & Layout</item>
+  </inputs>
+
+  <checks>
+
+    <check>
+      <title>Completeness</title>
+      <requirements>
+        <requirement>Verify if backend data layer (repository + service) covers all required operations (fetch article, comments, ratings, versions)</requirement>
+        <requirement>Verify if API layer exposes all necessary endpoints for frontend consumption</requirement>
+        <requirement>Verify if frontend components can render all required article data and interactions</requirement>
+        <requirement>Identify any missing features required for a functional end-to-end flow</requirement>
+      </requirements>
+    </check>
+
+    <check>
+      <title>Separation of Concerns</title>
+      <requirements>
+        <requirement>Ensure repository only handles database queries</requirement>
+        <requirement>Ensure service contains business logic and transformations</requirement>
+        <requirement>Ensure controllers only handle request/response orchestration</requirement>
+        <requirement>Ensure frontend components are UI-focused and not handling business logic</requirement>
+      </requirements>
+    </check>
+
+    <check>
+      <title>API Contract Consistency</title>
+      <requirements>
+        <requirement>Validate that request/response structures are clearly defined</requirement>
+        <requirement>Check alignment between backend responses and frontend expectations</requirement>
+        <requirement>Identify missing DTOs or inconsistent field naming</requirement>
+        <requirement>Check for missing endpoints (e.g., delete comment, update rating, pagination)</requirement>
+      </requirements>
+    </check>
+
+    <check>
+      <title>Frontend Coverage</title>
+      <requirements>
+        <requirement>Verify UI components cover all required states (loading, error, empty)</requirement>
+        <requirement>Check if components receive sufficient props to render data correctly</requirement>
+        <requirement>Identify missing UI behaviors (e.g., auth-based rendering, disabled actions)</requirement>
+        <requirement>Ensure components are reusable and modular</requirement>
+      </requirements>
+    </check>
+
+    <check>
+      <title>Edge Cases & Gaps</title>
+      <requirements>
+        <requirement>Pagination for comments</requirement>
+        <requirement>Sorting or filtering of comments or ratings</requirement>
+        <requirement>Handling of unauthenticated vs authenticated users</requirement>
+        <requirement>Error handling scenarios across backend and frontend</requirement>
+        <requirement>Performance concerns (e.g., overfetching, N+1 queries)</requirement>
+      </requirements>
+    </check>
+
+    <check>
+      <title>Security & Authorization</title>
+      <requirements>
+        <requirement>Ensure backend enforces authentication on protected endpoints</requirement>
+        <requirement>Ensure role-based access is handled where required</requirement>
+        <requirement>Verify frontend does not rely solely on client-side guards for security</requirement>
+      </requirements>
+    </check>
+
+  </checks>
+
+  <output>
+
+    <sections>
+      <section>Summary verdict</section>
+      <section>Missing items (if any)</section>
+      <section>Issues categorized by Backend / API / Frontend</section>
+      <section>Recommendations and additional subtasks</section>
+      <section>Final readiness status (Ready / Needs Clarification / Not Ready)</section>
+    </sections>
+
+  </output>
+
+</task>

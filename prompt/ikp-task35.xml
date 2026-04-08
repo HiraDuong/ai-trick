@@ -1,0 +1,126 @@
+<Task id="35-extended">
+  <title>Full UI Interaction Validation + Bug Reporting + Self Code Review</title>
+
+  <objective>
+    Perform a complete validation of all UI interactive elements (buttons, inputs, forms, and controls),
+    identify functional issues, produce a structured bug report, and conduct a self-review of the entire
+    source code to detect potential causes of UI issues, inconsistencies, or anti-patterns.
+  </objective>
+
+  <scope>
+    <includes>
+      All UI pages and components
+      Buttons, inputs, forms, selects, checkboxes, radio buttons
+      Conditional rendering based on role/auth/state
+      API-driven UI behaviors
+      Frontend state management logic
+      Relevant UI-related backend contract usage (read-only validation)
+    </includes>
+    <excludes>
+      Introducing new features outside of bug fixes
+      Major refactoring unrelated to identified issues
+      Changing backend logic unless required to fix a confirmed UI issue
+    </excludes>
+  </scope>
+
+  <test_execution>
+
+    <phase name="UI Interaction Testing">
+      <steps>
+        Iterate through all pages and components
+        Interact with every button (click, double click, rapid click)
+        Validate all input fields (typing, focus, validation, edge cases)
+        Test all forms (submit, validation, error handling)
+        Verify conditional UI rendering (role, auth, permissions)
+        Validate loading, success, and error states
+      </steps>
+      <coverage_expectation>
+        No interactive element is left untested
+        All user flows are exercised end-to-end
+      </coverage_expectation>
+    </phase>
+
+    <phase name="Bug Detection">
+      <steps>
+        Identify non-functional buttons
+        Identify disabled elements that should be enabled
+        Identify inputs that cannot be edited or lose state
+        Detect incorrect validation behavior
+        Detect UI state mismatch with backend responses
+        Detect performance or UX issues (lag, double triggers)
+      </steps>
+    </phase>
+
+    <phase name="Bug Reporting">
+      <output_format>
+        Each bug must include:
+        Title
+        Description
+        Steps to reproduce
+        Expected result
+        Actual result
+        Severity (Critical / High / Medium / Low)
+        Affected component/page
+        Screenshots or logs (if available)
+      </output_format>
+      <report_structure>
+        Group bugs by category:
+        Buttons
+        Inputs
+        Forms
+        Conditional UI
+        API-driven UI
+      </report_structure>
+    </phase>
+
+    <phase name="Self Code Review">
+      <areas_to_review>
+        Event handlers (onClick, onChange, submit handlers)
+        State management (React/Vue state, hooks, stores)
+        Controlled vs uncontrolled inputs
+        Conditional rendering logic
+        Permission/role checks
+        API integration layers
+        Error handling and loading states
+        Reusable components and prop handling
+      </areas_to_review>
+
+      <checks>
+        No dead or unused handlers
+        No incorrect dependency in hooks/effects
+        No state mutation issues
+        No inconsistent UI state logic
+        No missing null/undefined guards
+        No mismatch between frontend assumptions and backend contract
+        No duplicated logic causing inconsistency
+      </checks>
+
+      <output>
+        Identify problematic patterns
+        Highlight risky code sections
+        Suggest minimal fixes for each issue
+      </output>
+    </phase>
+
+  </test_execution>
+
+  <validation_criteria>
+    All UI interactions behave as expected
+    All detected bugs are documented with reproducible steps
+    Source code review identifies root causes of issues
+    No critical UI-breaking issues remain unresolved
+  </validation_criteria>
+
+  <deliverables>
+    Bug report document (structured and categorized)
+    Self-review report of frontend source code
+    Summary of overall UI health status
+    List of critical issues requiring fixes
+  </deliverables>
+
+  <notes>
+    Prioritize reproducibility and clarity in bug reporting.
+    Ensure findings are based on actual observed behavior, not assumptions.
+    Keep bug reports actionable for developers.
+  </notes>
+</Task>

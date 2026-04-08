@@ -2,7 +2,7 @@
 // Vu Huy Hoang - Dev2
 "use client";
 
-import { startTransition, useEffect, useEffectEvent, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ArticleDetailDto,
   ArticleListResponseDto,
@@ -63,18 +63,26 @@ function buildContentPayload(text: string): string[] {
 }
 
 export function DraftStudio({ categories }: DraftStudioProps) {
-  const categoryOptions = flattenCategories(categories);
+  const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
+  const defaultCategoryId = categoryOptions[0]?.id ?? "";
   const [drafts, setDrafts] = useState<ArticleDetailDto[]>([]);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState(categoryOptions[0]?.id ?? "");
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
   const [content, setContent] = useState("");
   const [versions, setVersions] = useState<ArticleVersionDto[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const selectedArticleIdRef = useRef<string | null>(selectedArticleId);
+  const loadDraftsRef = useRef<() => Promise<void>>(async () => undefined);
+  const saveDraftRef = useRef<() => Promise<void>>(async () => undefined);
 
-  const loadArticle = useEffectEvent(async (articleId: string) => {
+  useEffect(() => {
+    selectedArticleIdRef.current = selectedArticleId;
+  }, [selectedArticleId]);
+
+  const loadArticle = useCallback(async (articleId: string) => {
     const articleResult = await fetchAuthenticatedApi<ArticleDetailDto>(`/articles/${articleId}`);
     if (!articleResult.ok) {
       setMessage(articleResult.message);
@@ -89,9 +97,9 @@ export function DraftStudio({ categories }: DraftStudioProps) {
     setDirty(false);
     setVersions(versionsResult.ok ? versionsResult.data : []);
     setMessage(null);
-  });
+  }, []);
 
-  const loadDrafts = useEffectEvent(async () => {
+  const loadDrafts = useCallback(async () => {
     if (!getStoredAccessToken()) {
       setMessage("Log in as an author or editor to manage drafts.");
       setDrafts([]);
@@ -127,8 +135,9 @@ export function DraftStudio({ categories }: DraftStudioProps) {
     setDrafts(availableDrafts);
     setMessage(null);
 
-    const nextSelectedId = selectedArticleId && availableDrafts.some((draft) => draft.id === selectedArticleId)
-      ? selectedArticleId
+    const currentSelectedArticleId = selectedArticleIdRef.current;
+    const nextSelectedId = currentSelectedArticleId && availableDrafts.some((draft) => draft.id === currentSelectedArticleId)
+      ? currentSelectedArticleId
       : availableDrafts[0]?.id ?? null;
 
     if (nextSelectedId) {
@@ -138,23 +147,27 @@ export function DraftStudio({ categories }: DraftStudioProps) {
       setTitle("");
       setContent("");
       setVersions([]);
-      setCategoryId(categoryOptions[0]?.id ?? "");
+      setCategoryId(defaultCategoryId);
     }
-  });
+  }, [defaultCategoryId, loadArticle]);
+
+  useEffect(() => {
+    loadDraftsRef.current = loadDrafts;
+  }, [loadDrafts]);
 
   useEffect(() => {
     startTransition(() => {
-      void loadDrafts();
+      void loadDraftsRef.current();
     });
 
     return subscribeToAuthTokenChanges(() => {
       startTransition(() => {
-        void loadDrafts();
+        void loadDraftsRef.current();
       });
     });
-  }, [loadDrafts]);
+  }, []);
 
-  const saveDraft = useEffectEvent(async () => {
+  const saveDraft = useCallback(async () => {
     if (!selectedArticleId || !dirty) {
       return;
     }
@@ -185,7 +198,11 @@ export function DraftStudio({ categories }: DraftStudioProps) {
     if (versionsResult.ok) {
       setVersions(versionsResult.data);
     }
-  });
+  }, [categoryId, content, dirty, selectedArticleId, title]);
+
+  useEffect(() => {
+    saveDraftRef.current = saveDraft;
+  }, [saveDraft]);
 
   useEffect(() => {
     if (!selectedArticleId || !dirty) {
@@ -193,13 +210,13 @@ export function DraftStudio({ categories }: DraftStudioProps) {
     }
 
     const intervalId = window.setInterval(() => {
-      void saveDraft();
+      void saveDraftRef.current();
     }, 8000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [dirty, saveDraft, selectedArticleId]);
+  }, [dirty, selectedArticleId]);
 
   async function handleCreateDraft() {
     if (!categoryId) {

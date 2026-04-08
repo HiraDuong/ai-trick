@@ -1,0 +1,64 @@
+<TASK id="31" priority="MEDIUM">
+  <TITLE>Frontend Architecture Refactor (Interaction Layer)</TITLE>
+
+  <DESCRIPTION>
+    Refactor frontend architecture by extracting API interaction logic from UI components into
+    dedicated hooks or service layers to improve separation of concerns and maintainability.
+  </DESCRIPTION>
+
+  <SCOPE>
+    <AREA>Frontend</AREA>
+    <AFFECTED_MODULES>
+      <MODULE>Article Detail Page</MODULE>
+      <MODULE>CommentSection</MODULE>
+      <MODULE>ArticleActions</MODULE>
+    </AFFECTED_MODULES>
+  </SCOPE>
+
+  <DETAILS>
+
+    <REFACTORING_GOALS>
+      <GOAL>Separate UI rendering logic from API request logic</GOAL>
+      <GOAL>Centralize data fetching and mutations</GOAL>
+      <GOAL>Reduce duplication of API calls across components</GOAL>
+      <GOAL>Improve testability and reusability</GOAL>
+    </REFACTORING_GOALS>
+
+    <IMPLEMENTATION>
+
+      <LAYER name="Interaction Layer">
+        <DESCRIPTION>
+          Create reusable hooks or services to handle article-related operations.
+        </DESCRIPTION>
+
+        <EXAMPLES>
+          <ITEM>useArticleComments</ITEM>
+          <ITEM>useArticleReactions</ITEM>
+          <ITEM>useArticleBookmarks</ITEM>
+        </EXAMPLES>
+
+        <RESPONSIBILITIES>
+          <ITEM>Fetch data from API</ITEM>
+          <ITEM>Handle mutations (create comment, toggle reaction, bookmark)</ITEM>
+          <ITEM>Manage loading, success, and error states</ITEM>
+          <ITEM>Expose clean API for components</ITEM>
+        </RESPONSIBILITIES>
+      </LAYER>
+
+      <COMPONENT_CHANGES>
+        <ITEM>Remove direct API calls from UI components</ITEM>
+        <ITEM>Replace with calls to hooks/services</ITEM>
+        <ITEM>Keep components focused on rendering only</ITEM>
+      </COMPONENT_CHANGES>
+
+    </IMPLEMENTATION>
+
+  </DETAILS>
+
+  <OUTPUT>
+    <ITEM>Reusable hooks or service layer for article interactions</ITEM>
+    <ITEM>Refactored UI components using interaction layer</ITEM>
+    <ITEM>Cleaner separation of concerns</ITEM>
+  </OUTPUT>
+
+</TASK>

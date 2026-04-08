@@ -30,6 +30,24 @@ function clearAccessTokenCookie(): void {
   document.cookie = `${ACCESS_TOKEN_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
+function readAccessTokenCookie(): string | null {
+  if (!isBrowser()) {
+    return null;
+  }
+
+  const cookiePrefix = `${ACCESS_TOKEN_COOKIE_NAME}=`;
+  const matchedCookie = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(cookiePrefix));
+
+  if (!matchedCookie) {
+    return null;
+  }
+
+  return decodeURIComponent(matchedCookie.slice(cookiePrefix.length));
+}
+
 function dispatchAuthTokenChanged(): void {
   if (!isBrowser()) {
     return;
@@ -51,7 +69,17 @@ export function getStoredAccessToken(): string | null {
     return null;
   }
 
-  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  const localStorageToken = window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (localStorageToken) {
+    return localStorageToken;
+  }
+
+  const cookieToken = readAccessTokenCookie();
+  if (cookieToken) {
+    window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, cookieToken);
+  }
+
+  return cookieToken;
 }
 
 export function setStoredAccessToken(token: string): void {

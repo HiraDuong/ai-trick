@@ -11,11 +11,16 @@ import { formatArticleDate } from "@/lib/format";
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
     async function loadNotifications() {
-      if (!getStoredAccessToken()) {
+      const token = getStoredAccessToken();
+      setHasToken(Boolean(token));
+
+      if (!token) {
         setNotifications([]);
+        setIsOpen(false);
         return;
       }
 
@@ -49,7 +54,7 @@ export function NotificationBell() {
 
   const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
-  if (!getStoredAccessToken()) {
+  if (!hasToken) {
     return null;
   }
 

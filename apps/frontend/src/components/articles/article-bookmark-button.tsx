@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { BookmarkListItemDto } from "@/lib/api-types";
+import type { BookmarkDto } from "@/lib/api-types";
 import { fetchAuthenticatedApi, getStoredAccessToken, subscribeToAuthTokenChanges } from "@/lib/auth";
 
 interface ArticleBookmarkButtonProps {
@@ -12,20 +12,24 @@ interface ArticleBookmarkButtonProps {
 
 export function ArticleBookmarkButton({ articleId }: ArticleBookmarkButtonProps) {
   const [bookmarked, setBookmarked] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function syncBookmarkState() {
       const token = getStoredAccessToken();
+      setHasToken(Boolean(token));
+
       if (!token) {
         setBookmarked(false);
+        setMessage(null);
         return;
       }
 
-      const result = await fetchAuthenticatedApi<BookmarkListItemDto[]>("/bookmarks");
+      const result = await fetchAuthenticatedApi<BookmarkDto>(`/articles/${articleId}/bookmark-status`);
       if (result.ok) {
-        setBookmarked(result.data.some((bookmark) => bookmark.articleId === articleId));
+        setBookmarked(result.data.bookmarked);
       }
     }
 
@@ -65,10 +69,10 @@ export function ArticleBookmarkButton({ articleId }: ArticleBookmarkButtonProps)
       <button
         type="button"
         onClick={() => void handleToggleBookmark()}
-        disabled={loading}
+        disabled={loading || !hasToken}
         className="inline-flex items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {bookmarked ? "Saved" : "Save article"}
+        {!hasToken ? "Log in to save" : bookmarked ? "Saved" : "Save article"}
       </button>
       {message ? <p className="text-xs text-[var(--color-danger)]">{message}</p> : null}
     </div>

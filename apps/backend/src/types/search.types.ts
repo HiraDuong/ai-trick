@@ -5,6 +5,8 @@ import type { ArticleAuthorDto, ArticleCategoryDto, ArticleTagDto } from "./arti
 export interface SearchArticleItemDto {
   id: string;
   title: string;
+  excerpt: string;
+  highlightTerms: string[];
   publishedAt: Date | null;
   views: number;
   createdAt: Date;
@@ -17,6 +19,8 @@ export interface SearchArticleItemDto {
 
 export interface SearchArticlesQueryDto {
   q?: string;
+  tagId?: string;
+  tag?: string;
   limit?: string;
   skip?: string;
 }
@@ -31,6 +35,7 @@ export interface SearchPaginationDto {
 
 export interface SearchArticlesResponseDto {
   query: string;
+  tag: ArticleTagDto | null;
   items: SearchArticleItemDto[];
   pagination: SearchPaginationDto;
 }
