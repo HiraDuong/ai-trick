@@ -6,6 +6,8 @@ set -euo pipefail
 : "${ARTIFACT_REGISTRY_REPOSITORY:=my-repo}"
 : "${CLOUD_RUN_BACKEND_SERVICE:=backend-service}"
 : "${IMAGE_TAG:?IMAGE_TAG is required}"
+: "${BACKEND_DATABASE_URL:?BACKEND_DATABASE_URL is required}"
+: "${BACKEND_JWT_SECRET:?BACKEND_JWT_SECRET is required}"
 
 BACKEND_IMAGE_NAME="${BACKEND_IMAGE_NAME:-backend}"
 GAR_HOST="${GCP_REGION}-docker.pkg.dev"
@@ -36,11 +38,7 @@ if [[ -n "${BACKEND_INGRESS:-}" ]]; then
   deploy_args+=(--ingress "$BACKEND_INGRESS")
 fi
 
-env_vars=("NODE_ENV=production" "HOST=0.0.0.0" "PORT=8080")
-
-if [[ -n "${BACKEND_DATABASE_URL:-}" ]]; then
-  env_vars+=("DATABASE_URL=${BACKEND_DATABASE_URL}")
-fi
+env_vars=("NODE_ENV=production" "HOST=0.0.0.0" "PORT=8080" "DATABASE_URL=${BACKEND_DATABASE_URL}" "JWT_SECRET=${BACKEND_JWT_SECRET}")
 
 if [[ -n "${BACKEND_SHADOW_DATABASE_URL:-}" ]]; then
   env_vars+=("SHADOW_DATABASE_URL=${BACKEND_SHADOW_DATABASE_URL}")
@@ -48,10 +46,6 @@ fi
 
 if [[ -n "${BACKEND_CORS_ORIGIN:-}" ]]; then
   env_vars+=("CORS_ORIGIN=${BACKEND_CORS_ORIGIN}")
-fi
-
-if [[ -n "${BACKEND_JWT_SECRET:-}" ]]; then
-  env_vars+=("JWT_SECRET=${BACKEND_JWT_SECRET}")
 fi
 
 if [[ -n "${BACKEND_JWT_EXPIRES_IN:-}" ]]; then

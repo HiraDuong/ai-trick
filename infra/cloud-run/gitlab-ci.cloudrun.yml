@@ -1,5 +1,7 @@
 # Include file example for GitLab pipelines that build to Google Artifact Registry
 # and deploy to Cloud Run. This is additive and does not replace the existing CI file.
+# Root pipeline should declare these stages in order:
+# docker -> deploy-backend -> docker-frontend -> deploy-frontend
 
 .cloud_run_gcp_auth:
   image: google/cloud-sdk:slim
@@ -33,12 +35,30 @@ docker_backend_cloudrun:
         --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/backend:$CI_COMMIT_SHORT_SHA" \
         --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/backend:latest"
 
-docker_frontend_cloudrun:
-  extends: .cloud_run_kaniko
-  stage: docker
+deploy_backend_cloudrun:
+  extends: .cloud_run_gcp_auth
+  stage: deploy-backend
+  needs:
+    - job: docker_backend_cloudrun
   script:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
-    - export FRONTEND_API_URL="${NEXT_PUBLIC_API_BASE_URL:-${BACKEND_URL:-http://localhost:5000/api}}"
+    - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
+    - IMAGE_TAG="$CI_COMMIT_SHORT_SHA" bash infra/cloud-run/deploy-backend.sh
+    - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
+    - test -n "$BACKEND_SERVICE_URL"
+    - printf 'BACKEND_URL=%s/api\n' "$BACKEND_SERVICE_URL" > cloudrun-backend.env
+  artifacts:
+    reports:
+      dotenv: cloudrun-backend.env
+
+docker_frontend_cloudrun:
+  extends: .cloud_run_kaniko
+  stage: docker-frontend
+  needs:
+    - job: deploy_backend_cloudrun
+  script:
+    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
+    - export FRONTEND_API_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - |
       /kaniko/executor \
         --context "$CI_PROJECT_DIR/apps/frontend" \
@@ -47,18 +67,14 @@ docker_frontend_cloudrun:
         --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHORT_SHA" \
         --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:latest"
 
-deploy_backend_cloudrun:
-  extends: .cloud_run_gcp_auth
-  stage: deploy
-  script:
-    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
-    - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
-    - IMAGE_TAG="$CI_COMMIT_SHORT_SHA" bash infra/cloud-run/deploy-backend.sh
-
 deploy_frontend_cloudrun:
   extends: .cloud_run_gcp_auth
-  stage: deploy
+  stage: deploy-frontend
+  needs:
+    - job: docker_frontend_cloudrun
+    - job: deploy_backend_cloudrun
   script:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
     - export CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
+    - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHORT_SHA" bash infra/cloud-run/deploy-frontend.sh

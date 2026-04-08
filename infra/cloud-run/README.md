@@ -42,7 +42,7 @@ Optional:
 
 - `CLOUD_RUN_FRONTEND_SERVICE`
 - `IMAGE_TAG`
-- `BACKEND_URL` or `NEXT_PUBLIC_API_BASE_URL`
+- `BACKEND_URL`
 
 Optional:
 
@@ -53,7 +53,7 @@ Optional:
 
 ## Important frontend note
 
-`NEXT_PUBLIC_API_BASE_URL` is bundled into the client build. In GitLab CI, the intended flow is: deploy backend once, copy its Cloud Run URL into the `BACKEND_URL` variable, then rerun the frontend image build so the client bundle points at the real API.
+`NEXT_PUBLIC_API_BASE_URL` is bundled into the client build. The main GitLab pipeline now deploys the backend first, captures the resulting Cloud Run service URL, exports it as `BACKEND_URL`, and then builds the frontend image with that value.
 
 Example:
 
@@ -61,7 +61,7 @@ Example:
 /kaniko/executor \
   --context "$CI_PROJECT_DIR/apps/frontend" \
   --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
-  --build-arg "NEXT_PUBLIC_API_BASE_URL=${BACKEND_URL:-https://backend-service-xyz.a.run.app/api}" \
+  --build-arg "NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL" \
   --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHORT_SHA"
 ```
 

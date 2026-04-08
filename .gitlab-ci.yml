@@ -8,6 +8,9 @@ stages:
   - build
   - test
   - docker
+  - deploy-backend
+  - docker-frontend
+  - deploy-frontend
   - deploy
 
 variables:
@@ -124,6 +127,7 @@ docker_frontend:
 
 docker_backend_cloudrun:
   extends: .cloud_run_kaniko
+  stage: docker
   needs: ["build"]
   script:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
@@ -132,10 +136,11 @@ docker_backend_cloudrun:
       /kaniko/executor \
         --context "$CI_PROJECT_DIR/apps/backend" \
         --dockerfile "$CI_PROJECT_DIR/apps/backend/Dockerfile" \
-        --destination "$IMAGE_BE"
+        --destination "$IMAGE_BE" \
+        --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/backend:latest"
 
 deploy_backend_cloudrun:
-  stage: deploy
+  stage: deploy-backend
   extends: .cloud_run_gcp_auth
   needs:
     - job: docker_backend_cloudrun
@@ -144,33 +149,45 @@ deploy_backend_cloudrun:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
-    - gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)'
+    - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
+    - test -n "$BACKEND_SERVICE_URL"
+    - printf 'BACKEND_URL=%s/api\n' "$BACKEND_SERVICE_URL" > cloudrun-backend.env
+    - cat cloudrun-backend.env
+  artifacts:
+    reports:
+      dotenv: cloudrun-backend.env
   environment:
     name: cloudrun-backend
 
 docker_frontend_cloudrun:
   extends: .cloud_run_kaniko
-  needs: ["build"]
+  stage: docker-frontend
+  needs:
+    - job: build
+    - job: deploy_backend_cloudrun
   script:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
     - export IMAGE_FE="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHA"
-    - export FRONTEND_API_URL="${NEXT_PUBLIC_API_BASE_URL:-${BACKEND_URL:-http://localhost:5000/api}}"
+    - export FRONTEND_API_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - |
       /kaniko/executor \
         --context "$CI_PROJECT_DIR/apps/frontend" \
         --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
         --build-arg "NEXT_PUBLIC_API_BASE_URL=$FRONTEND_API_URL" \
-        --destination "$IMAGE_FE"
+        --destination "$IMAGE_FE" \
+        --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:latest"
 
 deploy_frontend_cloudrun:
-  stage: deploy
+  stage: deploy-frontend
   extends: .cloud_run_gcp_auth
   needs:
     - job: docker_frontend_cloudrun
+    - job: deploy_backend_cloudrun
   <<: *cloud_run_job_rules
   script:
     - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
     - export CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
+    - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-frontend.sh
     - gcloud run services describe "$CLOUD_RUN_FRONTEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)'
   environment:
@@ -183,8 +200,7 @@ deploy_production:
     - job: docker_backend
     - job: docker_frontend
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-    - if: $CI_COMMIT_BRANCH == "production"
+    - if: '$DEPLOY_HOST && $DEPLOY_USER && $DEPLOY_SSH_PRIVATE_KEY && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "production")'
   before_script:
     - apk add --no-cache openssh-client bash
     - eval "$(ssh-agent -s)"
