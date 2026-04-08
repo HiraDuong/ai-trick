@@ -3,7 +3,7 @@ set -euo pipefail
 
 : "${GCP_PROJECT_ID:?GCP_PROJECT_ID is required}"
 : "${GCP_REGION:?GCP_REGION is required}"
-: "${ARTIFACT_REGISTRY_REPOSITORY:=my-repo}"
+: "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
 : "${CLOUD_RUN_FRONTEND_SERVICE:=frontend-service}"
 : "${IMAGE_TAG:?IMAGE_TAG is required}"
 

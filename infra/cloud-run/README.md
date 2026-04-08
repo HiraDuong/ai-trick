@@ -14,12 +14,14 @@ Both Dockerfiles now default to `PORT=8080`, which matches Cloud Run expectation
 - `GCP_PROJECT_ID`
 - `GCP_REGION`
 - `GCP_SERVICE_ACCOUNT_KEY`
+- `ARTIFACT_REGISTRY_REPOSITORY`
 
 Optional defaults:
 
-- `ARTIFACT_REGISTRY_REPOSITORY` (defaults to `my-repo`)
 - `CLOUD_RUN_BACKEND_SERVICE` (defaults to `backend-service`)
 - `CLOUD_RUN_FRONTEND_SERVICE` (defaults to `frontend-service`)
+
+`ARTIFACT_REGISTRY_REPOSITORY` must exactly match the existing Artifact Registry Docker repository name in Google Cloud. Example: if you created `ikp-images`, set `ARTIFACT_REGISTRY_REPOSITORY=ikp-images`.
 
 ## Backend deploy variables
 

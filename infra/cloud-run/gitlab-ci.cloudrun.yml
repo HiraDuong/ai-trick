@@ -27,7 +27,7 @@ docker_backend_cloudrun:
   extends: .cloud_run_kaniko
   stage: docker
   script:
-    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
+    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
     - |
       /kaniko/executor \
         --context "$CI_PROJECT_DIR/apps/backend" \
@@ -41,7 +41,7 @@ deploy_backend_cloudrun:
   needs:
     - job: docker_backend_cloudrun
   script:
-    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
+    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - IMAGE_TAG="$CI_COMMIT_SHORT_SHA" bash infra/cloud-run/deploy-backend.sh
     - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
@@ -57,7 +57,7 @@ docker_frontend_cloudrun:
   needs:
     - job: deploy_backend_cloudrun
   script:
-    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
+    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
     - export FRONTEND_API_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - |
       /kaniko/executor \
@@ -74,7 +74,7 @@ deploy_frontend_cloudrun:
     - job: docker_frontend_cloudrun
     - job: deploy_backend_cloudrun
   script:
-    - export ARTIFACT_REGISTRY_REPOSITORY="${ARTIFACT_REGISTRY_REPOSITORY:-my-repo}"
+    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
     - export CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
     - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHORT_SHA" bash infra/cloud-run/deploy-frontend.sh
