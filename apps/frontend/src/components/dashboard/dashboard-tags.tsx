@@ -27,10 +27,10 @@ export function DashboardTags({ tags }: DashboardTagsProps) {
             <Link
               key={tag.id}
               href={buildTagHref(tag.id, tag.name)}
-              className="inline-flex items-center gap-3 rounded-full border border-[var(--color-line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              className="inline-flex items-center gap-3 rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/12 px-4 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:bg-[var(--color-accent)]/20"
             >
               <span>#{tag.name}</span>
-              <span className="rounded-full bg-[var(--color-background)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+              <span className="rounded-full border border-[var(--color-line)] bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-foreground)]/80">
                 {tag.articleCount}
               </span>
             </Link>

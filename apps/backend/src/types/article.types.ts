@@ -39,6 +39,7 @@ export interface CreateArticleRequestDto {
   content: Prisma.InputJsonValue;
   categoryId: string;
   status?: string;
+  tags?: string[];
 }
 
 export interface UpdateArticleRequestDto {
@@ -46,6 +47,7 @@ export interface UpdateArticleRequestDto {
   content?: Prisma.InputJsonValue;
   categoryId?: string;
   status?: string;
+  tags?: string[];
 }
 
 export interface ArticleRouteParamsDto {
@@ -57,6 +59,7 @@ export interface ArticleListQueryDto {
   limit?: string;
   skip?: string;
   status?: string;
+  categoryId?: string;
 }
 
 export interface ArticleListPaginationDto {
@@ -85,6 +88,7 @@ export interface ArticleVersionActorDto {
 export interface ArticleVersionItemDto {
   id: string;
   articleId: string;
+  createdAt: Date;
   updatedAt: Date;
   updatedBy: ArticleVersionActorDto;
   contentSnapshot: Prisma.JsonValue;

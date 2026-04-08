@@ -38,6 +38,7 @@ interface ValidatedCreateArticleInput {
   content: Prisma.InputJsonValue;
   categoryId: string;
   status: SupportedArticleStatus;
+  tags: string[];
 }
 
 interface ValidatedUpdateArticleInput {
@@ -45,12 +46,14 @@ interface ValidatedUpdateArticleInput {
   content?: Prisma.InputJsonValue;
   categoryId?: string;
   status?: SupportedArticleStatus;
+  tags?: string[];
 }
 
 interface ValidatedListQuery {
   limit: number;
   skip: number;
   status: SupportedArticleStatus;
+  categoryId?: string;
 }
 
 function readPayloadObject(payload: unknown): Record<string, unknown> {
@@ -98,6 +101,27 @@ function readStatus(value: string | undefined, fallback: SupportedArticleStatus)
   return value === undefined ? fallback : parseStatus(value);
 }
 
+function normalizeTags(value: unknown, fieldName: string): string[] {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw createHttpError(400, `${fieldName} must be an array of strings`);
+  }
+
+  const normalized = value
+    .map((tag) => {
+      if (typeof tag !== "string") {
+        throw createHttpError(400, `${fieldName} must contain only strings`);
+      }
+      return tag.trim().replace(/^#/, "");
+    })
+    .filter(Boolean)
+    .slice(0, 20);
+
+  return Array.from(new Set(normalized));
+}
+
 function validateCreatePayload(payload: CreateArticleRequestDto | unknown): ValidatedCreateArticleInput {
   const body = readPayloadObject(payload);
   const title = readRequiredString(body.title, "Title");
@@ -113,6 +137,7 @@ function validateCreatePayload(payload: CreateArticleRequestDto | unknown): Vali
     content,
     categoryId,
     status: readStatus(typeof body.status === "string" ? body.status : undefined, "DRAFT"),
+    tags: normalizeTags(body.tags, "Tags"),
   };
 }
 
@@ -136,6 +161,9 @@ function validateUpdatePayload(payload: UpdateArticleRequestDto | unknown): Vali
   if (Object.prototype.hasOwnProperty.call(body, "status")) {
     updateData.status = parseStatus(readRequiredString(body.status, "Status"));
   }
+  if (Object.prototype.hasOwnProperty.call(body, "tags")) {
+    updateData.tags = normalizeTags(body.tags, "Tags");
+  }
   if (Object.keys(updateData).length === 0) {
     throw createHttpError(400, "At least one updatable field is required");
   }
@@ -147,6 +175,7 @@ function validateListQuery(query: ArticleListQueryDto): ValidatedListQuery {
   const limit = Number.parseInt(query.limit ?? "10", 10);
   const skip = Number.parseInt(query.skip ?? "0", 10);
   const status = readStatus(query.status, "PUBLISHED");
+  const categoryId = query.categoryId ? readRequiredString(query.categoryId, "Category id") : undefined;
 
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
     throw createHttpError(400, "Limit must be an integer between 1 and 50");
@@ -155,7 +184,12 @@ function validateListQuery(query: ArticleListQueryDto): ValidatedListQuery {
     throw createHttpError(400, "Skip must be a non-negative integer");
   }
 
-  return { limit, skip, status };
+  return {
+    limit,
+    skip,
+    status,
+    ...(categoryId ? { categoryId } : {}),
+  };
 }
 
 function mapArticleListItem(article: ArticleListRecord): ArticleListItemDto {
@@ -240,7 +274,8 @@ export async function createArticle(
       authorId: user.id,
       ...buildPublicationFields(articleData.status),
     },
-    user.id
+    user.id,
+    articleData.tags
   );
 
   return mapArticleDetail(article);
@@ -269,6 +304,7 @@ export async function updateArticle(
     data: mutation,
     updatedById: user!.id,
     shouldSnapshotContent,
+    ...(updateData.tags ? { tagNames: updateData.tags } : {}),
   });
   return mapArticleDetail(article);
 }
@@ -341,6 +377,7 @@ export async function getArticleList(
     status: pagination.status,
     skip: pagination.skip,
     take: pagination.limit + 1,
+    ...(pagination.categoryId ? { categoryId: pagination.categoryId } : {}),
     ...(authorId ? { authorId } : {}),
   });
 
@@ -361,6 +398,7 @@ function mapArticleVersionItem(version: ArticleVersionRecord): ArticleVersionIte
   return {
     id: version.id,
     articleId: version.articleId,
+    createdAt: version.updatedAt,
     updatedAt: version.updatedAt,
     updatedBy: {
       id: version.updatedBy.id,

@@ -44,6 +44,7 @@ type SearchCountRow = {
 };
 
 export type SearchArticleRecord = Prisma.ArticleGetPayload<{ select: typeof searchArticleSelect }>;
+export type TagRecord = { id: string; name: string };
 
 function buildSearchVector(): Prisma.Sql {
   return Prisma.sql`
@@ -102,4 +103,56 @@ export async function findSearchArticlesByIds(articleIds: string[]): Promise<Sea
     },
     select: searchArticleSelect,
   });
+}
+
+export async function findTagById(tagId: string): Promise<TagRecord | null> {
+  return prisma.tag.findUnique({
+    where: { id: tagId },
+    select: { id: true, name: true },
+  });
+}
+
+export async function findTagByName(name: string): Promise<TagRecord | null> {
+  return prisma.tag.findUnique({
+    where: { name },
+    select: { id: true, name: true },
+  });
+}
+
+export async function searchPublishedArticleIdsByTag(
+  tagId: string,
+  skip: number,
+  take: number
+): Promise<{ rows: SearchArticleRow[]; total: number }> {
+  const [rows, total] = await Promise.all([
+    prisma.article.findMany({
+      where: {
+        status: "PUBLISHED",
+        articleTags: {
+          some: {
+            tagId,
+          },
+        },
+      },
+      select: { id: true },
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      skip,
+      take,
+    }),
+    prisma.article.count({
+      where: {
+        status: "PUBLISHED",
+        articleTags: {
+          some: {
+            tagId,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    rows: rows.map((row) => ({ id: row.id, score: 1 })),
+    total,
+  };
 }

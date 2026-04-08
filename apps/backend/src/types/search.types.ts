@@ -17,6 +17,8 @@ export interface SearchArticleItemDto {
 
 export interface SearchArticlesQueryDto {
   q?: string;
+  tagId?: string;
+  tag?: string;
   limit?: string;
   skip?: string;
 }
@@ -31,6 +33,7 @@ export interface SearchPaginationDto {
 
 export interface SearchArticlesResponseDto {
   query: string;
+  tag: ArticleTagDto | null;
   items: SearchArticleItemDto[];
   pagination: SearchPaginationDto;
 }

@@ -70,6 +70,7 @@ export type ArticleVersionRecord = Prisma.ArticleVersionGetPayload<{ select: typ
 export interface ArticleListParams {
   status: ArticleStatus;
   authorId?: string;
+  categoryId?: string;
   skip: number;
   take: number;
 }
@@ -104,11 +105,43 @@ export async function createArticle(data: ArticleMutationData): Promise<ArticleD
 
 export async function createArticleWithInitialVersion(
   data: ArticleMutationData,
-  updatedById: string
+  updatedById: string,
+  tagNames: string[] = []
 ): Promise<ArticleDetailRecord> {
   return prisma.$transaction(async (tx) => {
+    const createInput: Prisma.ArticleCreateInput = {
+      title: data.title as string,
+      content: data.content as Prisma.InputJsonValue,
+      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(data.publishedAt !== undefined ? { publishedAt: data.publishedAt } : {}),
+      author: {
+        connect: {
+          id: data.authorId as string,
+        },
+      },
+      category: {
+        connect: {
+          id: data.categoryId as string,
+        },
+      },
+      ...(tagNames.length > 0
+        ? {
+            articleTags: {
+              create: tagNames.map((name) => ({
+                tag: {
+                  connectOrCreate: {
+                    where: { name },
+                    create: { name },
+                  },
+                },
+              })),
+            },
+          }
+        : {}),
+    };
+
     const article = await tx.article.create({
-      data: data as Prisma.ArticleCreateInput,
+      data: createInput,
       select: articleDetailSelect,
     });
 
@@ -137,8 +170,9 @@ export async function updateArticleWithVersionSnapshot(params: {
   data: ArticleMutationData;
   updatedById: string;
   shouldSnapshotContent: (previousContent: Prisma.JsonValue) => boolean;
+  tagNames?: string[];
 }): Promise<ArticleDetailRecord> {
-  const { articleId, data, updatedById, shouldSnapshotContent } = params;
+  const { articleId, data, updatedById, shouldSnapshotContent, tagNames } = params;
 
   return prisma.$transaction(async (tx) => {
     const current = await tx.article.findUnique({
@@ -155,21 +189,53 @@ export async function updateArticleWithVersionSnapshot(params: {
       throw new Error("Article not found");
     }
 
-    if (shouldSnapshotContent(current.content)) {
+    const shouldCreateVersion = shouldSnapshotContent(current.content);
+
+    const updateInput: Prisma.ArticleUpdateInput = {
+      ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.content !== undefined ? { content: data.content } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(data.publishedAt !== undefined ? { publishedAt: data.publishedAt } : {}),
+      ...(data.categoryId !== undefined ? { category: { connect: { id: data.categoryId } } } : {}),
+      ...(tagNames
+        ? {
+            articleTags: {
+              deleteMany: {},
+              ...(tagNames.length > 0
+                ? {
+                    create: tagNames.map((name) => ({
+                      tag: {
+                        connectOrCreate: {
+                          where: { name },
+                          create: { name },
+                        },
+                      },
+                    })),
+                  }
+                : {}),
+            },
+          }
+        : {}),
+    };
+
+    const updatedArticle = await tx.article.update({
+      where: { id: articleId },
+      data: updateInput,
+      select: articleDetailSelect,
+    });
+
+    if (shouldCreateVersion) {
       await tx.articleVersion.create({
         data: {
           articleId,
-          contentSnapshot: current.content === null ? Prisma.JsonNull : (current.content as Prisma.InputJsonValue),
+          contentSnapshot:
+            updatedArticle.content === null ? Prisma.JsonNull : (updatedArticle.content as Prisma.InputJsonValue),
           updatedById,
         },
       });
     }
 
-    return tx.article.update({
-      where: { id: articleId },
-      data,
-      select: articleDetailSelect,
-    });
+    return updatedArticle;
   });
 }
 
@@ -183,10 +249,11 @@ export async function deleteArticle(articleId: string): Promise<{ id: string; ti
   });
 }
 
-export async function findArticles({ status, authorId, skip, take }: ArticleListParams): Promise<ArticleListRecord[]> {
+export async function findArticles({ status, authorId, categoryId, skip, take }: ArticleListParams): Promise<ArticleListRecord[]> {
   const where: Prisma.ArticleWhereInput = {
     status,
     ...(authorId ? { authorId } : {}),
+    ...(categoryId ? { categoryId } : {}),
   };
 
   const orderBy: Prisma.ArticleOrderByWithRelationInput[] =

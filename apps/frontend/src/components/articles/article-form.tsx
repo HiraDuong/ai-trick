@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { fetchAuthenticatedApi } from "@/lib/auth";
 import type { ArticleDetailDto, CategoryNodeDto, CurrentUserResponseDto } from "@/lib/api-types";
 import { ArticleEditor } from "@/components/editor/article-editor";
+import { ArticleVersionHistoryPanel } from "@/components/articles/article-version-history-panel";
 
 interface CategoryOption {
   id: string;
@@ -253,6 +254,8 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.watch("content")) }}
               />
             </div>
+
+            {mode === "edit" && articleId ? <ArticleVersionHistoryPanel articleId={articleId} /> : null}
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
