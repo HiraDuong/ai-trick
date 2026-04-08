@@ -50,7 +50,7 @@ export async function deleteCommentController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await deleteComment(request.params.commentId, request.user);
+    const result = await deleteComment(request.params.commentId, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

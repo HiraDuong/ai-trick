@@ -41,8 +41,9 @@ function readForwardedFor(headerValue: string | string[] | undefined): string | 
 }
 
 function getViewerSessionKey(request: Request): string | undefined {
-  if (request.user) {
-    return `user:${request.user.id}`;
+  const user = readRequestUser(request);
+  if (user) {
+    return `user:${user.id}`;
   }
 
   const cookieHeader = request.headers.cookie;
