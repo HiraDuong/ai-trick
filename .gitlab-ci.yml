@@ -1,5 +1,5 @@
-# Internal Knowledge Platform — GitLab CI/CD (monorepo)
-# Secrets: GitLab → Settings → CI/CD → Variables (không hardcode trong file này).
+# Internal Knowledge Platform - GitLab CI/CD (monorepo)
+# Secrets: GitLab -> Settings -> CI/CD -> Variables (khong hardcode trong file nay).
 # Legacy deploy: DEPLOY_SSH_PRIVATE_KEY, DEPLOY_HOST, DEPLOY_USER.
 # Cloud Run deploy: GCP_PROJECT_ID, GCP_REGION, GCP_SERVICE_ACCOUNT_KEY, BACKEND_URL.
 
@@ -16,7 +16,6 @@ stages:
 variables:
   NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
 
-# Cache npm theo lockfile (install/build/test dùng chung key).
 .npm_cache: &npm_cache
   cache:
     key:
@@ -31,9 +30,7 @@ install:
   image: node:20-bookworm-slim
   <<: *npm_cache
   script:
-    # npm install (không ci): lockfile từ Windows có thể thiếu optional native linux cho Tailwind v4.
     - npm install
-    # Frontend workspace cần refresh riêng trên Linux để materialize đúng lightningcss native binary.
     - rm -rf apps/frontend/node_modules
     - npm install --prefix apps/frontend --package-lock=false --include=optional
 
@@ -130,7 +127,7 @@ docker_backend_cloudrun:
   stage: docker
   needs: ["build"]
   script:
-    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
+    - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export IMAGE_BE="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/backend:$CI_COMMIT_SHA"
     - |
       /kaniko/executor \
@@ -146,7 +143,7 @@ deploy_backend_cloudrun:
     - job: docker_backend_cloudrun
   <<: *cloud_run_job_rules
   script:
-    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
+    - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
     - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
@@ -166,7 +163,7 @@ docker_frontend_cloudrun:
     - job: build
     - job: deploy_backend_cloudrun
   script:
-    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
+    - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export IMAGE_FE="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHA"
     - export FRONTEND_API_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - |
@@ -185,7 +182,7 @@ deploy_frontend_cloudrun:
     - job: deploy_backend_cloudrun
   <<: *cloud_run_job_rules
   script:
-    - : "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"
+    - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
     - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-frontend.sh
