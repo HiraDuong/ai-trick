@@ -78,7 +78,7 @@ docker_backend:
   script:
     - |
       /kaniko/executor \
-        --context "$CI_PROJECT_DIR" \
+        --context "$CI_PROJECT_DIR/apps/backend" \
         --dockerfile "$CI_PROJECT_DIR/apps/backend/Dockerfile" \
         --destination "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" \
         --destination "$CI_REGISTRY_IMAGE/backend:latest"
@@ -89,7 +89,7 @@ docker_frontend:
   script:
     - |
       /kaniko/executor \
-        --context "$CI_PROJECT_DIR" \
+        --context "$CI_PROJECT_DIR/apps/frontend" \
         --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
         --build-arg "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000}" \
         --destination "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" \

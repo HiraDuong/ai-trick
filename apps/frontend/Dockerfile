@@ -1,22 +1,23 @@
-# Build từ thư mục gốc monorepo (Next.js output: standalone):
-#   docker build -f apps/frontend/Dockerfile -t ikp-frontend .
-# Debian slim (glibc): Tailwind v4 / lightningcss có binary linux-gnu; Alpine musl thường thiếu optional native.
-FROM node:20-bookworm-slim AS builder
+# Build từ chính thư mục apps/frontend.
+# Debian slim (glibc) giúp Tailwind v4 / lightningcss dùng native linux ổn định hơn Alpine.
+FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 
-# Không copy package-lock.json: lockfile tạo trên Windows thường thiếu optional native linux (Tailwind v4 / lightningcss / oxide).
-COPY package.json ./
-COPY apps/backend/package.json apps/backend/
-COPY apps/frontend/package.json apps/frontend/
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci --include=optional
 
-COPY apps/frontend ./apps/frontend
+FROM node:20-bookworm-slim AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build --workspace=frontend
+RUN npm run build \
+  && npm prune --omit=dev
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -26,13 +27,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-CMD ["node", "apps/frontend/server.js"]
+CMD ["npm", "run", "start"]
