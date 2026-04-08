@@ -12,6 +12,7 @@ export interface CommentDto {
   parentId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt: Date | null;
   author: CommentAuthorDto;
   replies: CommentDto[];
 }
@@ -24,6 +25,11 @@ export interface CreateCommentRequestDto {
 export interface CommentRouteParamsDto {
   [key: string]: string;
   articleId: string;
+}
+
+export interface DeleteCommentRouteParamsDto {
+  [key: string]: string;
+  commentId: string;
 }
 
 export interface CommentListQueryDto {
@@ -41,4 +47,9 @@ export interface CommentListPaginationDto {
 export interface CommentListResponseDto {
   items: CommentDto[];
   pagination: CommentListPaginationDto;
+}
+
+export interface DeleteCommentResponseDto {
+  id: string;
+  deletedAt: Date;
 }

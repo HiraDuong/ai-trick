@@ -34,6 +34,11 @@ export interface ArticleDetailDto extends ArticleListItemDto {
   content: Prisma.JsonValue;
 }
 
+export interface ArticleStatsRouteParamsDto {
+  [key: string]: string;
+  articleId: string;
+}
+
 export interface CreateArticleRequestDto {
   title: string;
   content: Prisma.InputJsonValue;

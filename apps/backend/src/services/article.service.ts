@@ -1,6 +1,7 @@
 // Luvina
 // Vu Huy Hoang - Dev2
 import type { Prisma } from "@prisma/client";
+import { touchArticleViewSession } from "../repositories/article-view.repository";
 import {
   createArticle as createArticleRecord,
   deleteArticle as deleteArticleRecord,
@@ -52,7 +53,6 @@ interface ValidatedListQuery {
 }
 
 const VIEW_DEDUP_WINDOW_MS = 30 * 60 * 1000;
-const articleViewTracker = new Map<string, number>();
 
 function readPayloadObject(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -241,29 +241,13 @@ function buildArticleViewKey(articleId: string, viewerSessionKey?: string): stri
   return `${articleId}:${viewerSessionKey}`;
 }
 
-function pruneExpiredArticleViews(now: number): void {
-  for (const [key, timestamp] of articleViewTracker.entries()) {
-    if (now - timestamp >= VIEW_DEDUP_WINDOW_MS) {
-      articleViewTracker.delete(key);
-    }
-  }
-}
-
-function shouldIncrementArticleView(articleId: string, viewerSessionKey?: string): boolean {
+async function shouldIncrementArticleView(articleId: string, viewerSessionKey?: string): Promise<boolean> {
   const cacheKey = buildArticleViewKey(articleId, viewerSessionKey);
   if (!cacheKey) {
     return true;
   }
 
-  const now = Date.now();
-  pruneExpiredArticleViews(now);
-  const lastViewedAt = articleViewTracker.get(cacheKey);
-  if (lastViewedAt && now - lastViewedAt < VIEW_DEDUP_WINDOW_MS) {
-    return false;
-  }
-
-  articleViewTracker.set(cacheKey, now);
-  return true;
+  return touchArticleViewSession(articleId, cacheKey, VIEW_DEDUP_WINDOW_MS);
 }
 
 export async function createArticle(
@@ -356,7 +340,7 @@ export async function getArticleDetail(
     if (!hasStudioAccessRole(user.role) || !canManageArticle(user, article.authorId)) {
       throw createHttpError(403, "You do not have permission to access this article");
     }
-  } else if (shouldIncrementArticleView(normalizedArticleId, viewerSessionKey)) {
+  } else if (await shouldIncrementArticleView(normalizedArticleId, viewerSessionKey)) {
     await incrementArticleViews(normalizedArticleId);
   }
 

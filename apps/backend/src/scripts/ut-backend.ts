@@ -95,6 +95,7 @@ async function stopServer(server: Server): Promise<void> {
 async function resetDatabase(): Promise<void> {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
+      "ArticleViewSession",
       "Notification",
       "Reaction",
       "Bookmark",

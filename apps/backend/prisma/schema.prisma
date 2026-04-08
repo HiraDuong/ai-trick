@@ -26,6 +26,17 @@ enum HelpfulnessValue {
   NOT_HELPFUL
 }
 
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+}
+
+enum NotificationType {
+  ARTICLE_COMMENT
+  COMMENT_REPLY
+}
+
 model User {
   id                 String              @id @default(cuid())
   name               String
@@ -36,6 +47,9 @@ model User {
   articleVersions    ArticleVersion[]    @relation("ArticleVersionUpdatedBy")
   comments           Comment[]
   helpfulnessRatings HelpfulnessRating[]
+  bookmarks          Bookmark[]
+  reactions          Reaction[]
+  notifications      Notification[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -70,6 +84,9 @@ model Article {
   versions           ArticleVersion[]
   comments           Comment[]
   helpfulnessRatings HelpfulnessRating[]
+  bookmarks          Bookmark[]
+  reactions          Reaction[]
+  viewSessions       ArticleViewSession[]
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -117,6 +134,7 @@ model Comment {
   articleId String
   userId    String
   parentId  String?
+  deletedAt DateTime?
   article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id])
   parent    Comment?  @relation("CommentThread", fields: [parentId], references: [id])
@@ -140,4 +158,54 @@ model HelpfulnessRating {
 
   @@unique([articleId, userId])
   @@index([userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+  @@index([articleId])
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  userId    String
+  articleId String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  entityId  String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+}
+
+model ArticleViewSession {
+  id            String   @id @default(cuid())
+  articleId     String
+  viewerKeyHash String
+  lastViewedAt  DateTime @default(now())
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, viewerKeyHash])
+  @@index([lastViewedAt])
 }

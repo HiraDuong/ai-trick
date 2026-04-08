@@ -7,7 +7,9 @@ const commentSelect = Prisma.validator<Prisma.CommentSelect>()({
   id: true,
   content: true,
   articleId: true,
+  userId: true,
   parentId: true,
+  deletedAt: true,
   createdAt: true,
   updatedAt: true,
   user: {
@@ -27,7 +29,9 @@ const articleCommentAccessSelect = Prisma.validator<Prisma.ArticleSelect>()({
 const commentParentAccessSelect = Prisma.validator<Prisma.CommentSelect>()({
   id: true,
   articleId: true,
+  userId: true,
   parentId: true,
+  deletedAt: true,
 });
 
 export type CommentRecord = Prisma.CommentGetPayload<{ select: typeof commentSelect }>;
@@ -55,6 +59,13 @@ export async function findArticleAccessById(articleId: string): Promise<ArticleC
 }
 
 export async function findParentCommentById(commentId: string): Promise<CommentParentAccessRecord | null> {
+  return prisma.comment.findUnique({
+    where: { id: commentId },
+    select: commentParentAccessSelect,
+  });
+}
+
+export async function findCommentById(commentId: string): Promise<CommentParentAccessRecord | null> {
   return prisma.comment.findUnique({
     where: { id: commentId },
     select: commentParentAccessSelect,
@@ -100,5 +111,18 @@ export async function findRepliesByParentIds(articleId: string, parentIds: strin
     },
     select: commentSelect,
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+}
+
+export async function softDeleteComment(commentId: string): Promise<{ id: string; deletedAt: Date | null }> {
+  return prisma.comment.update({
+    where: { id: commentId },
+    data: {
+      deletedAt: new Date(),
+    },
+    select: {
+      id: true,
+      deletedAt: true,
+    },
   });
 }

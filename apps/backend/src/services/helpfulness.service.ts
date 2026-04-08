@@ -13,6 +13,7 @@ import type {
   RateArticleHelpfulnessRequestDto,
 } from "../types/helpfulness.types";
 import { createHttpError } from "../utils/error.utils";
+import { canManageArticle, hasStudioAccessRole } from "../utils/studio-access.utils";
 
 function readPayloadObject(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -66,16 +67,33 @@ async function ensureArticleIsAccessible(articleId: string, user: AuthenticatedU
   }
 
   if (article.status !== "PUBLISHED") {
-    if (user.role !== "AUTHOR" || user.id !== article.authorId) {
+    if (!hasStudioAccessRole(user.role) || !canManageArticle(user, article.authorId)) {
       throw createHttpError(403, "You do not have permission to access this article");
     }
   }
 }
 
-async function buildHelpfulnessSummary(articleId: string, userId: string): Promise<HelpfulnessSummaryDto> {
+async function ensureArticleIsAccessibleForRead(articleId: string, user: AuthenticatedUser | undefined): Promise<void> {
+  const article = await findArticleAccessById(articleId);
+  if (!article) {
+    throw createHttpError(404, "Article not found");
+  }
+
+  if (article.status !== "PUBLISHED") {
+    if (!user) {
+      throw createHttpError(404, "Article not found");
+    }
+
+    if (!hasStudioAccessRole(user.role) || !canManageArticle(user, article.authorId)) {
+      throw createHttpError(403, "You do not have permission to access this article");
+    }
+  }
+}
+
+async function buildHelpfulnessSummary(articleId: string, userId?: string): Promise<HelpfulnessSummaryDto> {
   const [counts, userRating] = await Promise.all([
     countHelpfulnessRatings(articleId),
-    findUserHelpfulnessRating(articleId, userId),
+    userId ? findUserHelpfulnessRating(articleId, userId) : Promise.resolve(null),
   ]);
 
   let helpfulCount = 0;
@@ -104,10 +122,9 @@ export async function getArticleHelpfulness(
   articleId: string,
   user: AuthenticatedUser | undefined
 ): Promise<HelpfulnessSummaryDto> {
-  ensureAuthenticatedUser(user);
   const normalizedArticleId = readArticleId(articleId);
-  await ensureArticleIsAccessible(normalizedArticleId, user);
-  return buildHelpfulnessSummary(normalizedArticleId, user.id);
+  await ensureArticleIsAccessibleForRead(normalizedArticleId, user);
+  return buildHelpfulnessSummary(normalizedArticleId, user?.id);
 }
 
 export async function rateArticleHelpfulness(

@@ -1,0 +1,83 @@
+<authConsistencyAudit generatedAt="2026-04-08" taskId="33">
+  <scope>
+    <frontend>
+      <file>apps/frontend/src/proxy.ts</file>
+      <file>apps/frontend/src/lib/server-auth.ts</file>
+      <file>apps/frontend/src/lib/studio-access.ts</file>
+      <file>apps/frontend/src/lib/api.ts</file>
+      <file>apps/frontend/src/app/articles/[articleId]/page.tsx</file>
+      <file>apps/frontend/src/app/studio/page.tsx</file>
+      <file>apps/frontend/src/components/studio/draft-studio.tsx</file>
+      <file>apps/frontend/src/components/articles/article-bookmark-button.tsx</file>
+      <file>apps/frontend/src/components/articles/article-comments-card.tsx</file>
+      <file>apps/frontend/src/components/articles/article-reaction-bar.tsx</file>
+      <file>apps/frontend/src/components/articles/article-helpfulness-card.tsx</file>
+    </frontend>
+    <backend>
+      <file>apps/backend/src/routes/article.routes.ts</file>
+      <file>apps/backend/src/routes/bookmark.routes.ts</file>
+      <file>apps/backend/src/routes/comment.routes.ts</file>
+      <file>apps/backend/src/routes/reaction.routes.ts</file>
+      <file>apps/backend/src/routes/helpfulness.routes.ts</file>
+      <file>apps/backend/src/routes/stats.routes.ts</file>
+      <file>apps/backend/src/routes/version.routes.ts</file>
+      <file>apps/backend/src/routes/auth.routes.ts</file>
+      <file>apps/backend/src/services/article.service.ts</file>
+      <file>apps/backend/src/services/bookmark.service.ts</file>
+      <file>apps/backend/src/services/comment.service.ts</file>
+      <file>apps/backend/src/services/reaction.service.ts</file>
+      <file>apps/backend/src/services/helpfulness.service.ts</file>
+      <file>apps/backend/src/services/stats.service.ts</file>
+      <file>apps/backend/src/services/version.service.ts</file>
+      <file>apps/backend/src/utils/studio-access.utils.ts</file>
+    </backend>
+  </scope>
+  <summary>
+    <consistent count="6">
+      <item>Studio route and server guard alignment</item>
+      <item>Article create/update/delete/publish/unpublish authorization</item>
+      <item>Version history and restore authorization</item>
+      <item>Bookmarks page and bookmarks API authentication</item>
+      <item>Bookmark status endpoint contract</item>
+      <item>auth/me contract</item>
+    </consistent>
+    <mismatches count="3">
+      <item>Unpublished comments, reactions, helpfulness, and stats remain AUTHOR-only in backend services</item>
+      <item>Frontend bookmark button still overfetches /bookmarks instead of using /articles/:articleId/bookmark-status</item>
+      <item>Public article page has no authenticated draft preview flow despite backend unpublished detail support</item>
+    </mismatches>
+  </summary>
+  <findings>
+    <finding id="AC-01" category="backend-stricter">
+      <title>Unpublished auxiliary endpoints are not aligned with studio access helpers</title>
+      <evidence>
+        <file>apps/backend/src/services/comment.service.ts</file>
+        <file>apps/backend/src/services/reaction.service.ts</file>
+        <file>apps/backend/src/services/helpfulness.service.ts</file>
+        <file>apps/backend/src/services/stats.service.ts</file>
+        <file>apps/backend/src/utils/studio-access.utils.ts</file>
+      </evidence>
+      <behavior>These services gate unpublished access with AUTHOR-own checks instead of AUTHOR or EDITOR plus canManageArticle().</behavior>
+      <recommendation>Use shared studio access helpers for unpublished article access on these services.</recommendation>
+    </finding>
+    <finding id="AC-02" category="contract-lag">
+      <title>Bookmark button does not consume the new bookmark-status endpoint</title>
+      <evidence>
+        <file>apps/frontend/src/components/articles/article-bookmark-button.tsx</file>
+        <file>apps/backend/src/routes/bookmark.routes.ts</file>
+      </evidence>
+      <behavior>The frontend still loads the full bookmarks list to derive one article's bookmark state.</behavior>
+      <recommendation>Switch the frontend per-article bookmark lookup to GET /articles/:articleId/bookmark-status.</recommendation>
+    </finding>
+    <finding id="AC-03" category="latent-contract-gap">
+      <title>Public article page is published-oriented while backend supports authenticated unpublished detail</title>
+      <evidence>
+        <file>apps/frontend/src/app/articles/[articleId]/page.tsx</file>
+        <file>apps/frontend/src/lib/api.ts</file>
+        <file>apps/backend/src/services/article.service.ts</file>
+      </evidence>
+      <behavior>The backend can return unpublished detail for authorized users, but the current frontend page only performs anonymous-style public fetches.</behavior>
+      <recommendation>Add a dedicated authenticated draft preview flow only if required; keep the public page published-only.</recommendation>
+    </finding>
+  </findings>
+</authConsistencyAudit>
