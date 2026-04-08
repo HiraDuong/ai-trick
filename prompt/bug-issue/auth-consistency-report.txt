@@ -1,0 +1,83 @@
+Task 33 - Frontend Backend Authorization And Contract Consistency Audit
+Generated: 2026-04-08
+
+Scope reviewed
+- Frontend guards and auth helpers: apps/frontend/src/proxy.ts, apps/frontend/src/lib/server-auth.ts, apps/frontend/src/lib/studio-access.ts
+- Frontend article and bookmark consumers: apps/frontend/src/lib/api.ts, apps/frontend/src/components/articles/article-bookmark-button.tsx, apps/frontend/src/components/articles/article-comments-card.tsx, apps/frontend/src/components/articles/article-reaction-bar.tsx, apps/frontend/src/components/articles/article-helpfulness-card.tsx, apps/frontend/src/app/articles/[articleId]/page.tsx, apps/frontend/src/app/studio/page.tsx, apps/frontend/src/components/studio/draft-studio.tsx
+- Backend routes and auth rules: apps/backend/src/routes/article.routes.ts, apps/backend/src/routes/bookmark.routes.ts, apps/backend/src/routes/comment.routes.ts, apps/backend/src/routes/reaction.routes.ts, apps/backend/src/routes/helpfulness.routes.ts, apps/backend/src/routes/stats.routes.ts, apps/backend/src/routes/version.routes.ts, apps/backend/src/routes/auth.routes.ts
+- Backend services and shared access helpers: apps/backend/src/services/article.service.ts, apps/backend/src/services/bookmark.service.ts, apps/backend/src/services/comment.service.ts, apps/backend/src/services/reaction.service.ts, apps/backend/src/services/helpfulness.service.ts, apps/backend/src/services/stats.service.ts, apps/backend/src/services/version.service.ts, apps/backend/src/utils/studio-access.utils.ts
+
+Executive summary
+- Consistent protected flows: studio route access, article create/update/delete/publish/unpublish, version history and restore, bookmarks page/list/create/delete, bookmark-status, auth/me
+- Verified mismatches: 3
+- Primary mismatch class: backend stricter than the effective AUTHOR or EDITOR studio policy on unpublished article auxiliary endpoints
+
+Finding 1
+Category: Backend stricter than shared studio policy
+Area: Unpublished article engagement and stats access
+Files:
+- apps/backend/src/services/comment.service.ts
+- apps/backend/src/services/reaction.service.ts
+- apps/backend/src/services/helpfulness.service.ts
+- apps/backend/src/services/stats.service.ts
+- apps/backend/src/utils/studio-access.utils.ts
+
+Observed behavior
+- Core article management and draft detail in apps/backend/src/services/article.service.ts uses shared studio rules: AUTHOR or EDITOR may enter studio flows, and EDITOR may manage any article through canManageArticle().
+- Comment, reaction, helpfulness, and stats services still use AUTHOR-only unpublished access checks of the form user.role !== "AUTHOR" || user.id !== article.authorId.
+
+Impact
+- EDITOR is allowed to manage unpublished content in article and version services, but the same EDITOR is blocked from draft-adjacent endpoints on the same unpublished article.
+- This is a real authorization inconsistency inside the backend and can surface as partial access if draft preview or management tooling expands.
+
+Recommendation
+- For unpublished articles, replace duplicated AUTHOR-only checks with shared studio-aware ownership logic based on hasStudioAccessRole() and canManageArticle().
+
+Finding 2
+Category: Frontend contract lag
+Area: Bookmark state lookup
+Files:
+- apps/frontend/src/components/articles/article-bookmark-button.tsx
+- apps/backend/src/routes/bookmark.routes.ts
+- apps/backend/src/services/bookmark.service.ts
+
+Observed behavior
+- Task 32 added GET /articles/:articleId/bookmark-status.
+- The article bookmark button still calls GET /bookmarks and filters the entire list client-side to compute a single article state.
+
+Impact
+- Authorization is still consistent because both paths require authentication, but frontend is not consuming the more specific backend contract.
+- This keeps unnecessary overfetching in place and leaves the new endpoint unused.
+
+Recommendation
+- Update the article bookmark button to use the dedicated bookmark-status endpoint when determining per-article bookmark state.
+
+Finding 3
+Category: Latent frontend/backend contract mismatch
+Area: Public article page versus unpublished access
+Files:
+- apps/frontend/src/app/articles/[articleId]/page.tsx
+- apps/frontend/src/lib/api.ts
+- apps/backend/src/services/article.service.ts
+
+Observed behavior
+- The public article page always prefetches detail, comments, helpfulness, stats, and reactions through anonymous-capable helpers in apps/frontend/src/lib/api.ts.
+- Backend article detail already allows AUTHOR or EDITOR access to unpublished articles when authenticated, but the public page does not provide an authenticated draft preview flow.
+
+Impact
+- This is not currently a user-facing security bug because there is no frontend route promising editor draft preview outside studio.
+- It is a contract gap: backend supports authenticated unpublished article detail, while the current frontend public article route is effectively published-only.
+
+Recommendation
+- Keep the public article route published-only.
+- If draft preview is required, add a dedicated authenticated studio detail flow instead of extending the public page implicitly.
+
+Consistent areas reviewed
+- apps/frontend/src/proxy.ts and apps/frontend/src/lib/server-auth.ts are aligned with apps/backend/src/services/article.service.ts and apps/backend/src/services/version.service.ts for studio AUTHOR or EDITOR access.
+- apps/backend/src/services/article.service.ts and apps/backend/src/services/version.service.ts consistently enforce ownership for AUTHOR and all-content management for EDITOR through canManageArticle().
+- apps/frontend/src/app/bookmarks/page.tsx is aligned with apps/backend/src/routes/bookmark.routes.ts for authenticated bookmarks access.
+- apps/frontend/src/lib/server-auth.ts auth/me usage is aligned with apps/backend/src/routes/auth.routes.ts and apps/backend/src/services/auth.service.ts.
+
+Conclusion
+- No evidence was found that frontend studio or bookmarks guards are looser than backend enforcement.
+- The main remaining consistency gap is internal to backend unpublished article auxiliary endpoints, where shared studio access rules have not been propagated to comments, reactions, helpfulness, and stats.

@@ -6,6 +6,7 @@ import prisma from "../config/prisma";
 const searchArticleSelect = Prisma.validator<Prisma.ArticleSelect>()({
   id: true,
   title: true,
+  content: true,
   publishedAt: true,
   views: true,
   createdAt: true,
@@ -43,8 +44,13 @@ type SearchCountRow = {
   total: number;
 };
 
+const searchTagSelect = Prisma.validator<Prisma.TagSelect>()({
+  id: true,
+  name: true,
+});
+
 export type SearchArticleRecord = Prisma.ArticleGetPayload<{ select: typeof searchArticleSelect }>;
-export type TagRecord = { id: string; name: string };
+export type SearchTagRecord = Prisma.TagGetPayload<{ select: typeof searchTagSelect }>;
 
 function buildSearchVector(): Prisma.Sql {
   return Prisma.sql`
@@ -55,6 +61,7 @@ function buildSearchVector(): Prisma.Sql {
 
 export async function searchPublishedArticleIds(
   query: string,
+  normalizedTagQuery: string,
   skip: number,
   take: number
 ): Promise<{ rows: SearchArticleRow[]; total: number }> {
@@ -63,21 +70,53 @@ export async function searchPublishedArticleIds(
 
   const [rows, countRows] = await Promise.all([
     prisma.$queryRaw<SearchArticleRow[]>(Prisma.sql`
+      WITH matching_articles AS (
+        SELECT
+          a.id,
+          ts_rank_cd((${searchVector}), ${tsQuery}) AS score
+        FROM "Article" AS a
+        WHERE a.status = 'PUBLISHED'
+          AND ${tsQuery} @@ (${searchVector})
+
+        UNION ALL
+
+        SELECT
+          a.id,
+          1.25::float AS score
+        FROM "Article" AS a
+        INNER JOIN "ArticleTag" AS at ON at."articleId" = a.id
+        INNER JOIN "Tag" AS t ON t.id = at."tagId"
+        WHERE a.status = 'PUBLISHED'
+          AND LOWER(t.name) = ${normalizedTagQuery}
+      )
       SELECT
-        a.id,
-        ts_rank_cd((${searchVector}), ${tsQuery}) AS score
-      FROM "Article" AS a
-      WHERE a.status = 'PUBLISHED'
-        AND ${tsQuery} @@ (${searchVector})
-      ORDER BY score DESC, a."publishedAt" DESC NULLS LAST, a."createdAt" DESC, a.id DESC
+        matched.id,
+        MAX(matched.score) AS score
+      FROM matching_articles AS matched
+      INNER JOIN "Article" AS a ON a.id = matched.id
+      GROUP BY matched.id, a."publishedAt", a."createdAt"
+      ORDER BY MAX(matched.score) DESC, a."publishedAt" DESC NULLS LAST, a."createdAt" DESC, matched.id DESC
       OFFSET ${skip}
       LIMIT ${take}
     `),
     prisma.$queryRaw<SearchCountRow[]>(Prisma.sql`
+      WITH matching_articles AS (
+        SELECT a.id
+        FROM "Article" AS a
+        WHERE a.status = 'PUBLISHED'
+          AND ${tsQuery} @@ (${searchVector})
+
+        UNION
+
+        SELECT a.id
+        FROM "Article" AS a
+        INNER JOIN "ArticleTag" AS at ON at."articleId" = a.id
+        INNER JOIN "Tag" AS t ON t.id = at."tagId"
+        WHERE a.status = 'PUBLISHED'
+          AND LOWER(t.name) = ${normalizedTagQuery}
+      )
       SELECT COUNT(*)::int AS total
-      FROM "Article" AS a
-      WHERE a.status = 'PUBLISHED'
-        AND ${tsQuery} @@ (${searchVector})
+      FROM matching_articles
     `),
   ]);
 
@@ -87,6 +126,56 @@ export async function searchPublishedArticleIds(
       score: Number(row.score),
     })),
     total: countRows[0]?.total ?? 0,
+  };
+}
+
+export async function findTagById(tagId: string): Promise<SearchTagRecord | null> {
+  return prisma.tag.findUnique({
+    where: { id: tagId },
+    select: searchTagSelect,
+  });
+}
+
+export async function findTagByName(normalizedName: string): Promise<SearchTagRecord | null> {
+  return prisma.tag.findFirst({
+    where: { name: { equals: normalizedName, mode: "insensitive" } },
+    select: searchTagSelect,
+  });
+}
+
+export async function findPublishedArticleIdsByTagId(
+  tagId: string,
+  skip: number,
+  take: number
+): Promise<{ rows: SearchArticleRow[]; total: number }> {
+  const where = {
+    status: "PUBLISHED" as const,
+    articleTags: {
+      some: {
+        tagId,
+      },
+    },
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      select: {
+        id: true,
+      },
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
+      skip,
+      take,
+    }),
+    prisma.article.count({ where }),
+  ]);
+
+  return {
+    rows: rows.map((row) => ({
+      id: row.id,
+      score: 1,
+    })),
+    total,
   };
 }
 
@@ -103,56 +192,4 @@ export async function findSearchArticlesByIds(articleIds: string[]): Promise<Sea
     },
     select: searchArticleSelect,
   });
-}
-
-export async function findTagById(tagId: string): Promise<TagRecord | null> {
-  return prisma.tag.findUnique({
-    where: { id: tagId },
-    select: { id: true, name: true },
-  });
-}
-
-export async function findTagByName(name: string): Promise<TagRecord | null> {
-  return prisma.tag.findUnique({
-    where: { name },
-    select: { id: true, name: true },
-  });
-}
-
-export async function searchPublishedArticleIdsByTag(
-  tagId: string,
-  skip: number,
-  take: number
-): Promise<{ rows: SearchArticleRow[]; total: number }> {
-  const [rows, total] = await Promise.all([
-    prisma.article.findMany({
-      where: {
-        status: "PUBLISHED",
-        articleTags: {
-          some: {
-            tagId,
-          },
-        },
-      },
-      select: { id: true },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }, { id: "desc" }],
-      skip,
-      take,
-    }),
-    prisma.article.count({
-      where: {
-        status: "PUBLISHED",
-        articleTags: {
-          some: {
-            tagId,
-          },
-        },
-      },
-    }),
-  ]);
-
-  return {
-    rows: rows.map((row) => ({ id: row.id, score: 1 })),
-    total,
-  };
 }

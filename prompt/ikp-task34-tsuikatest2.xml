@@ -1,0 +1,188 @@
+<test_suite id="RBAC-ARTICLE-STUDIO">
+  <name>Role-Based Access Control Test Suite</name>
+
+  <description>
+    This suite validates authorization rules across AUTHOR, EDITOR, and VIEWER roles,
+    covering ownership-based access, permission-based access, CRUD operations,
+    publish/version flows, engagement features, and privilege escalation prevention.
+  </description>
+
+  <scope>
+    - Article management (draft, update, publish)
+    - Version control
+    - Reaction / engagement features
+    - Viewer read-only access
+    - Role escalation prevention
+  </scope>
+
+  <prompt>
+    Prepare test environment with multiple users having different roles:
+
+    - AUTHOR: owns several articles (draft + published)
+    - EDITOR: can manage all articles regardless of ownership
+    - VIEWER: read-only access to published articles
+
+    Test data must include:
+    - Articles created by multiple authors
+    - Draft and published articles
+    - Version history for at least one article
+
+    Each test case must be executed under the correct authenticated user context
+    using valid tokens/sessions per role.
+
+    Validate that:
+    - AUTHOR is restricted to own resources
+    - EDITOR can access and modify all resources within studio scope
+    - VIEWER can only read published content
+    - No unauthorized access returns data
+    - Unauthorized actions return 403 Forbidden
+    - No privilege escalation is possible via API
+  </prompt>
+
+  <!-- ================= SETUP REQUIREMENTS ================= -->
+
+  <setup>
+    <users>
+      - AUTHOR user (has ownership over multiple articles)
+      - EDITOR user (full permissions within studio)
+      - VIEWER user (read-only)
+    </users>
+
+    <data_requirements>
+      - Multiple articles from different authors
+      - Mix of draft and published articles
+      - Version history for at least one article
+    </data_requirements>
+
+    <preconditions>
+      - All users must be created in DB
+      - Authentication tokens must be available for each role
+      - Requests must include valid Authorization headers
+    </preconditions>
+  </setup>
+
+  <!-- ================= ARTICLE / STUDIO ================= -->
+
+  <case>
+    <case_id>BE-58</case_id>
+    <module>Article</module>
+    <type>Authorization</type>
+    <description>AUTHOR can only see own drafts</description>
+    <steps>GET /api/studio/articles/drafts</steps>
+    <expected_result>
+      Only articles where authorId equals current userId are returned
+    </expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-59</case_id>
+    <module>Article</module>
+    <type>Authorization</type>
+    <description>EDITOR can see all drafts</description>
+    <steps>GET /api/studio/articles/drafts</steps>
+    <expected_result>
+      Returns all drafts without authorId filtering
+    </expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-60</case_id>
+    <module>Article</module>
+    <type>Authorization Negative</type>
+    <description>AUTHOR cannot update others' articles</description>
+    <steps>PUT /api/studio/articles/{id}</steps>
+    <expected_result>403 Forbidden</expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-61</case_id>
+    <module>Article</module>
+    <type>Authorization</type>
+    <description>EDITOR can update any article</description>
+    <steps>PUT /api/studio/articles/{id}</steps>
+    <expected_result>200 OK</expected_result>
+  </case>
+
+  <!-- ================= PUBLISH / VERSION ================= -->
+
+  <case>
+    <case_id>BE-62</case_id>
+    <module>Article</module>
+    <type>Authorization Negative</type>
+    <description>AUTHOR cannot publish others' articles</description>
+    <steps>POST /api/studio/articles/{id}/publish</steps>
+    <expected_result>403 Forbidden</expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-63</case_id>
+    <module>Article</module>
+    <type>Authorization</type>
+    <description>EDITOR can publish any article</description>
+    <steps>POST /api/studio/articles/{id}/publish</steps>
+    <expected_result>200 OK</expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-64</case_id>
+    <module>Version</module>
+    <type>Authorization</type>
+    <description>EDITOR can restore any version</description>
+    <steps>POST /api/studio/articles/versions/{id}/restore</steps>
+    <expected_result>200 OK</expected_result>
+  </case>
+
+  <!-- ================= VIEWER ================= -->
+
+  <case>
+    <case_id>BE-65</case_id>
+    <module>Article</module>
+    <type>Authorization Negative</type>
+    <description>VIEWER cannot create article</description>
+    <steps>POST /api/studio/articles</steps>
+    <expected_result>403 Forbidden</expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-66</case_id>
+    <module>Article</module>
+    <type>Authorization</type>
+    <description>VIEWER can only access published articles</description>
+    <steps>GET /api/articles</steps>
+    <expected_result>Only published articles are returned</expected_result>
+  </case>
+
+  <!-- ================= ENGAGEMENT ================= -->
+
+  <case>
+    <case_id>BE-67</case_id>
+    <module>Reaction</module>
+    <type>Authorization</type>
+    <description>Reaction on draft restricted by ownership</description>
+    <steps>POST /api/reactions</steps>
+    <expected_result>
+      Allowed only if ownership conditions are satisfied
+    </expected_result>
+  </case>
+
+  <case>
+    <case_id>BE-68</case_id>
+    <module>Reaction</module>
+    <type>Authorization</type>
+    <description>EDITOR not restricted by ownership</description>
+    <steps>POST /api/reactions</steps>
+    <expected_result>Allowed</expected_result>
+  </case>
+
+  <!-- ================= NEGATIVE / ESCALATION ================= -->
+
+  <case>
+    <case_id>BE-69</case_id>
+    <module>Auth</module>
+    <type>Authorization Negative</type>
+    <description>User cannot escalate role via API</description>
+    <steps>Attempt to update role via any endpoint</steps>
+    <expected_result>403 Forbidden or no API available</expected_result>
+  </case>
+
+</test_suite>

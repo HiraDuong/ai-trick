@@ -28,6 +28,40 @@ function readRequestUser(request: unknown): AuthenticatedUser | undefined {
   return (request as Request & { user?: AuthenticatedUser }).user;
 }
 
+function readForwardedFor(headerValue: string | string[] | undefined): string | undefined {
+  if (Array.isArray(headerValue)) {
+    return headerValue[0]?.trim() || undefined;
+  }
+
+  if (typeof headerValue === "string") {
+    return headerValue.split(",")[0]?.trim() || undefined;
+  }
+
+  return undefined;
+}
+
+function getViewerSessionKey(request: Request): string | undefined {
+  if (request.user) {
+    return `user:${request.user.id}`;
+  }
+
+  const cookieHeader = request.headers.cookie;
+  if (typeof cookieHeader === "string" && cookieHeader.trim()) {
+    return `cookie:${cookieHeader.trim()}`;
+  }
+
+  const forwardedFor = readForwardedFor(request.headers["x-forwarded-for"]);
+  if (forwardedFor) {
+    return `ip:${forwardedFor}`;
+  }
+
+  if (request.ip) {
+    return `ip:${request.ip}`;
+  }
+
+  return undefined;
+}
+
 export async function createArticle(
   request: Request<Record<string, never>, ApiSuccessResponse<ArticleDetailDto>, CreateArticleRequestDto>,
   response: Response<ApiSuccessResponse<ArticleDetailDto>>,
@@ -99,7 +133,7 @@ export async function getArticleDetailController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await getArticleDetail(request.params.articleId, readRequestUser(request));
+    const result = await getArticleDetail(request.params.articleId, readRequestUser(request), getViewerSessionKey(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

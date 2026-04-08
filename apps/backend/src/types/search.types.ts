@@ -5,6 +5,8 @@ import type { ArticleAuthorDto, ArticleCategoryDto, ArticleTagDto } from "./arti
 export interface SearchArticleItemDto {
   id: string;
   title: string;
+  excerpt: string;
+  highlightTerms: string[];
   publishedAt: Date | null;
   views: number;
   createdAt: Date;

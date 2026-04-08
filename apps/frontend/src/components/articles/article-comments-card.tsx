@@ -57,6 +57,7 @@ function CommentThread({
   submitting: boolean;
 }) {
   const canDelete = currentUserId === comment.author.id && !comment.deletedAt;
+  const canReply = currentUserId !== null && !comment.deletedAt && !comment.parentId;
   const showReplyBox = replyTargetId === comment.id;
 
   return (
@@ -68,7 +69,7 @@ function CommentThread({
           {comment.deletedAt ? <span>Deleted</span> : null}
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.16em]">
-          {!comment.deletedAt && !comment.parentId ? (
+          {canReply ? (
             <button
               type="button"
               onClick={() => onToggleReply(comment.id)}
@@ -137,18 +138,16 @@ function CommentThread({
 }
 
 export function ArticleCommentsCard({ articleId, commentsResult }: ArticleCommentsCardProps) {
-  const [comments, setComments] = useState<CommentDto[]>(commentsResult.ok ? commentsResult.data.items : []);
+  const initialComments = commentsResult.ok ? commentsResult.data.items : [];
+  const initialMessage = commentsResult.ok ? null : commentsResult.message;
+  const [comments, setComments] = useState<CommentDto[]>(initialComments);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [replyTargetId, setReplyTargetId] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
-  const [message, setMessage] = useState<string | null>(commentsResult.ok ? null : commentsResult.message);
+  const [message, setMessage] = useState<string | null>(initialMessage);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    setComments(commentsResult.ok ? commentsResult.data.items : []);
-    setMessage(commentsResult.ok ? null : commentsResult.message);
-  }, [commentsResult]);
+  const isAuthenticated = currentUserId !== null;
 
   useEffect(() => {
     async function syncCurrentUser() {
@@ -251,14 +250,16 @@ export function ArticleCommentsCard({ articleId, commentsResult }: ArticleCommen
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           rows={4}
-          placeholder="Add a comment"
+          placeholder={isAuthenticated ? "Add a comment" : "Log in to add a comment"}
           className="w-full resize-y rounded-[1rem] border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-foreground)] outline-none"
         />
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-[var(--color-muted)]">Reply support is limited to one nested level.</p>
+          <p className="text-xs text-[var(--color-muted)]">
+            {isAuthenticated ? "Reply support is limited to one nested level." : "Log in to post or reply to comments."}
+          </p>
           <button
             type="button"
-            disabled={submitting || !draft.trim()}
+            disabled={submitting || !draft.trim() || !isAuthenticated}
             onClick={() => void createComment()}
             className="cursor-pointer rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-contrast)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -271,7 +272,7 @@ export function ArticleCommentsCard({ articleId, commentsResult }: ArticleCommen
 
       {comments.length === 0 ? (
         <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--color-line)] bg-[var(--color-background)]/70 p-5 text-sm leading-7 text-[var(--color-muted)]">
-          No comments yet. Log in to start the discussion.
+          {isAuthenticated ? "No comments yet. Start the discussion." : "No comments yet. Log in to start the discussion."}
         </div>
       ) : (
         <div className="mt-6 space-y-4">

@@ -1,0 +1,96 @@
+<TASK id="33" priority="HIGH">
+  <TITLE>Frontend-Backend Authorization & Contract Consistency Audit</TITLE>
+
+  <DESCRIPTION>
+    Perform a comprehensive audit to ensure that frontend authorization logic and backend authorization rules
+    are aligned across the system. The goal is to detect and prevent mismatches like role-based access discrepancies
+    between frontend guards and backend permission checks.
+  </DESCRIPTION>
+
+  <SCOPE>
+    <AREA>Full Stack</AREA>
+    <COMPONENTS>
+      <COMPONENT>Frontend Guards</COMPONENT>
+      <COMPONENT>Backend Authorization Middleware / Services</COMPONENT>
+      <COMPONENT>API Contracts</COMPONENT>
+    </COMPONENTS>
+  </SCOPE>
+
+  <OBJECTIVES>
+    <OBJECTIVE>Identify all role-based access rules implemented in frontend</OBJECTIVE>
+    <OBJECTIVE>Identify corresponding authorization rules in backend</OBJECTIVE>
+    <OBJECTIVE>Verify that roles and permissions are consistent between FE and BE</OBJECTIVE>
+    <OBJECTIVE>Detect any mismatches (e.g. AUTHOR-only vs AUTHOR+EDITOR)</OBJECTIVE>
+    <OBJECTIVE>Ensure no frontend guard is stricter or looser than backend policy</OBJECTIVE>
+  </OBJECTIVES>
+
+  <AUDIT_AREAS>
+
+    <AREA name="Frontend">
+      <CHECKS>
+        <ITEM>Route guards (server and client)</ITEM>
+        <ITEM>Component-level access control</ITEM>
+        <ITEM>Role checks used in UI rendering</ITEM>
+        <ITEM>Authentication state handling</ITEM>
+      </CHECKS>
+    </AREA>
+
+    <AREA name="Backend">
+      <CHECKS>
+        <ITEM>Authorization middleware</ITEM>
+        <ITEM>Service-level permission checks</ITEM>
+        <ITEM>Role validation logic (AUTHOR, EDITOR, USER, etc.)</ITEM>
+        <ITEM>Protected API endpoints</ITEM>
+      </CHECKS>
+    </AREA>
+
+    <AREA name="API Contract">
+      <CHECKS>
+        <ITEM>Endpoints requiring authentication</ITEM>
+        <ITEM>Endpoints requiring specific roles</ITEM>
+        <ITEM>Consistency of request/response structures</ITEM>
+      </CHECKS>
+    </AREA>
+
+  </AUDIT_AREAS>
+
+  <REQUIREMENTS>
+    <ITEM>Compare frontend guards with backend authorization rules for each protected feature</ITEM>
+    <ITEM>List all detected mismatches and categorize them (frontend stricter, backend stricter, or inconsistent)</ITEM>
+    <ITEM>Provide clear recommendation for alignment (frontend → backend or backend → frontend)</ITEM>
+    <ITEM>Ensure analysis is based on actual code behavior, not assumptions</ITEM>
+  </REQUIREMENTS>
+
+  <OUTPUT>
+
+    <REPORT_FILE>
+      <NAME>auth-consistency-report.txt</NAME>
+      <PATH>bug-issue/auth-consistency-report.txt</PATH>
+      <DESCRIPTION>
+        Human-readable report summarizing:
+        - Current frontend authorization rules
+        - Current backend authorization rules
+        - Detected mismatches
+        - Root causes
+        - Recommended fixes
+      </DESCRIPTION>
+    </REPORT_FILE>
+
+    <OPTIONAL_STRUCTURED_REPORT>
+      <NAME>auth-consistency.xml</NAME>
+      <PATH>bug-issue/auth-consistency.xml</PATH>
+      <DESCRIPTION>
+        Structured XML report listing all mismatches between FE and BE authorization logic.
+      </DESCRIPTION>
+    </OPTIONAL_STRUCTURED_REPORT>
+
+  </OUTPUT>
+
+  <CONSTRAINTS>
+    <ITEM>No code changes required unless explicitly fixing detected mismatches</ITEM>
+    <ITEM>Focus on analysis and detection rather than implementation</ITEM>
+    <ITEM>Use actual codebase evidence to justify findings</ITEM>
+    <ITEM>Do not assume roles or permissions that are not present in the code</ITEM>
+  </CONSTRAINTS>
+
+</TASK>

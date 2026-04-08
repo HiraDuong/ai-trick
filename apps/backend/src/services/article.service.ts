@@ -1,6 +1,7 @@
 // Luvina
 // Vu Huy Hoang - Dev2
 import type { Prisma } from "@prisma/client";
+import { touchArticleViewSession } from "../repositories/article-view.repository";
 import {
   createArticleWithInitialVersion,
   deleteArticle as deleteArticleRecord,
@@ -9,6 +10,7 @@ import {
   findArticleVersionsByArticleId,
   findArticles,
   findCategoryById,
+  incrementArticleViews,
   updateArticle as updateArticleRecord,
   updateArticleWithVersionSnapshot,
   type ArticleDetailRecord,
@@ -56,6 +58,7 @@ interface ValidatedListQuery {
   categoryId?: string;
 }
 
+const VIEW_DEDUP_WINDOW_MS = 30 * 60 * 1000;
 function readPayloadObject(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw createHttpError(400, "Request body must be a JSON object");
@@ -258,6 +261,23 @@ function isJsonEqual(a: unknown, b: unknown): boolean {
   return stableStringify(a) === stableStringify(b);
 }
 
+function buildArticleViewKey(articleId: string, viewerSessionKey?: string): string | null {
+  if (!viewerSessionKey) {
+    return null;
+  }
+
+  return `${articleId}:${viewerSessionKey}`;
+}
+
+async function shouldIncrementArticleView(articleId: string, viewerSessionKey?: string): Promise<boolean> {
+  const cacheKey = buildArticleViewKey(articleId, viewerSessionKey);
+  if (!cacheKey) {
+    return true;
+  }
+
+  return touchArticleViewSession(articleId, cacheKey, VIEW_DEDUP_WINDOW_MS);
+}
+
 export async function createArticle(
   payload: CreateArticleRequestDto | unknown,
   user: AuthenticatedUser | undefined
@@ -341,7 +361,8 @@ export async function unpublishArticle(
 
 export async function getArticleDetail(
   articleId: string,
-  user: AuthenticatedUser | undefined
+  user: AuthenticatedUser | undefined,
+  viewerSessionKey?: string
 ): Promise<ArticleDetailDto> {
   const normalizedArticleId = readArticleId(articleId);
   const article = await findArticleDetailById(normalizedArticleId);
@@ -356,6 +377,8 @@ export async function getArticleDetail(
     if (user.id !== article.authorId) {
       throw createHttpError(403, "You do not have permission to access this article");
     }
+  } else if (await shouldIncrementArticleView(normalizedArticleId, viewerSessionKey)) {
+    await incrementArticleViews(normalizedArticleId);
   }
 
   return mapArticleDetail(article);

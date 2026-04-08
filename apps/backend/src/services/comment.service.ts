@@ -3,19 +3,24 @@
 import {
   createComment as createCommentRecord,
   findArticleAccessById,
+  findCommentById,
   findParentCommentById,
   findRepliesByParentIds,
+  softDeleteComment,
   findTopLevelComments,
   type CommentRecord,
 } from "../repositories/comment.repository";
+import { notifyUsersForComment } from "./notification.service";
 import type { AuthenticatedUser } from "../types/auth.types";
 import type {
   CommentDto,
   CommentListQueryDto,
   CommentListResponseDto,
   CreateCommentRequestDto,
+  DeleteCommentResponseDto,
 } from "../types/comment.types";
 import { createHttpError } from "../utils/error.utils";
+import { canManageArticle, hasStudioAccessRole } from "../utils/studio-access.utils";
 
 interface ValidatedCreateCommentInput {
   content: string;
@@ -93,11 +98,12 @@ function validateListQuery(query: CommentListQueryDto): ValidatedCommentListQuer
 function mapComment(comment: CommentRecord, replies: CommentDto[] = []): CommentDto {
   return {
     id: comment.id,
-    content: comment.content,
+    content: comment.deletedAt ? "Comment removed" : comment.content,
     articleId: comment.articleId,
     parentId: comment.parentId,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
+    deletedAt: comment.deletedAt,
     author: comment.user,
     replies,
   };
@@ -114,7 +120,7 @@ async function ensureArticleIsAccessible(articleId: string, user: AuthenticatedU
       throw createHttpError(404, "Article not found");
     }
 
-    if (user.role !== "AUTHOR" || user.id !== article.authorId) {
+    if (!hasStudioAccessRole(user.role) || !canManageArticle(user, article.authorId)) {
       throw createHttpError(403, "You do not have permission to access comments for this article");
     }
   }
@@ -130,6 +136,9 @@ async function validateParentComment(parentId: string, articleId: string): Promi
   }
   if (parentComment.parentId) {
     throw createHttpError(400, "Only one reply level is supported");
+  }
+  if (parentComment.deletedAt) {
+    throw createHttpError(400, "You cannot reply to a deleted comment");
   }
 }
 
@@ -154,7 +163,48 @@ export async function createComment(
     ...(commentData.parentId ? { parentId: commentData.parentId } : {}),
   });
 
+  const article = await findArticleAccessById(normalizedArticleId);
+  const parentComment = commentData.parentId ? await findParentCommentById(commentData.parentId) : null;
+
+  if (article) {
+    await notifyUsersForComment({
+      articleAuthorId: article.authorId,
+      actorUserId: user.id,
+      articleId: normalizedArticleId,
+      ...(parentComment ? { parentCommentAuthorId: parentComment.userId } : {}),
+    });
+  }
+
   return mapComment(comment);
+}
+
+export async function deleteComment(
+  commentId: string,
+  user: AuthenticatedUser | undefined
+): Promise<DeleteCommentResponseDto> {
+  ensureAuthenticatedUser(user);
+
+  const normalizedCommentId = readRequiredString(commentId, "Comment id");
+  const comment = await findCommentById(normalizedCommentId);
+  if (!comment) {
+    throw createHttpError(404, "Comment not found");
+  }
+  if (comment.userId !== user.id) {
+    throw createHttpError(403, "You can only delete your own comments");
+  }
+  if (comment.deletedAt) {
+    throw createHttpError(400, "Comment has already been deleted");
+  }
+
+  const deletedComment = await softDeleteComment(normalizedCommentId);
+  if (!deletedComment.deletedAt) {
+    throw createHttpError(500, "Failed to delete comment");
+  }
+
+  return {
+    id: deletedComment.id,
+    deletedAt: deletedComment.deletedAt,
+  };
 }
 
 export async function getArticleComments(

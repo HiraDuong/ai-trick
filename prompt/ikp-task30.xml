@@ -1,0 +1,89 @@
+<TASK id="30" priority="HIGH">
+  <TITLE>Fix Studio Access Guard Mismatch for EDITOR Role</TITLE>
+
+  <DESCRIPTION>
+    Resolve the authorization mismatch issue where users with EDITOR role are blocked from accessing the /studio flow
+    in the frontend, while the expected policy for Cluster 2 allows AUTHOR or EDITOR roles for edit operations.
+    This task requires aligning frontend guard logic with the intended access policy and validating consistency with backend rules.
+  </DESCRIPTION>
+
+  <SCOPE>
+    <AREA>Full Stack (Frontend + Backend Alignment)</AREA>
+    <COMPONENTS>
+      <COMPONENT>Frontend Route Guards</COMPONENT>
+      <COMPONENT>Frontend Component Guards</COMPONENT>
+      <COMPONENT>Backend Authorization Rules</COMPONENT>
+    </COMPONENTS>
+  </SCOPE>
+
+  <PROBLEM_STATEMENT>
+    Current /studio access is restricted to AUTHOR only at multiple layers in the frontend:
+    - Server page guard (server-auth.ts)
+    - Page entry guard (page.tsx)
+    - Client component guard (draft-studio.tsx)
+
+    Meanwhile, Cluster 2 policy expects AUTHOR and EDITOR to both have access to edit flows.
+    Backend article management also currently enforces AUTHOR-only restrictions, creating a mismatch between
+    expected policy and actual implementation.
+  </PROBLEM_STATEMENT>
+
+  <REQUIREMENTS>
+
+    <FIX_REQUIREMENTS>
+      <ITEM>Update frontend guards to support AUTHOR and EDITOR roles instead of AUTHOR-only</ITEM>
+      <ITEM>Ensure consistent access control across:
+        - proxy layer
+        - server page guard
+        - client component guard
+      </ITEM>
+      <ITEM>Align guard logic so that EDITOR is no longer incorrectly blocked at frontend level</ITEM>
+      <ITEM>Verify that role-based access logic is centralized and not duplicated inconsistently</ITEM>
+    </FIX_REQUIREMENTS>
+
+    <BACKEND_ALIGNMENT>
+      <ITEM>Review backend authorization rules for article management</ITEM>
+      <ITEM>If necessary, align backend to support AUTHOR and EDITOR roles for edit operations</ITEM>
+      <ITEM>Ensure no unintended privilege escalation occurs</ITEM>
+    </BACKEND_ALIGNMENT>
+
+    <VALIDATION>
+      <ITEM>AUTHOR can access /studio and perform edit operations</ITEM>
+      <ITEM>EDITOR can access /studio and perform edit operations (if aligned with policy)</ITEM>
+      <ITEM>Unauthenticated users are still blocked</ITEM>
+      <ITEM>Non-authorized roles are still blocked appropriately</ITEM>
+    </VALIDATION>
+
+  </REQUIREMENTS>
+
+  <OUTPUT>
+
+    <CODE_CHANGES>
+      <ITEM>Updated frontend guard logic to support AUTHOR and EDITOR roles</ITEM>
+      <ITEM>Refactored duplicated guard checks if necessary</ITEM>
+    </CODE_CHANGES>
+
+    <REPORT_FILES>
+      <FILE>
+        <NAME>ikp-bug2.xml</NAME>
+        <PATH>bug-issue/ikp-bug2.xml</PATH>
+        <DESCRIPTION>Structured XML describing the bug, root cause, and fix approach</DESCRIPTION>
+      </FILE>
+      <FILE>
+        <NAME>bug2-report.txt</NAME>
+        <PATH>bug-issue/bug2-report.txt</PATH>
+        <DESCRIPTION>Human-readable report summarizing the issue, analysis, and resolution</DESCRIPTION>
+      </FILE>
+    </REPORT_FILES>
+
+  </OUTPUT>
+
+  <CONSTRAINTS>
+    <ITEM>Follow existing project patterns for guards and auth utilities</ITEM>
+    <ITEM>Do not introduce breaking changes to unrelated routes</ITEM>
+    <ITEM>Keep changes minimal and focused on fixing the role mismatch</ITEM>
+    <ITEM>Reports must reference observed behavior and actual code analysis</ITEM>
+    <ITEM>Place report files inside bug-issue folder</ITEM>
+    <ITEM>Use similar structure and tone as existing bug reports in the repository</ITEM>
+  </CONSTRAINTS>
+
+</TASK>

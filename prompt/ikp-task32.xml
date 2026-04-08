@@ -1,0 +1,74 @@
+<TASK id="32" priority="LOW">
+  <TITLE>Backend Optimization & API Contract Improvements</TITLE>
+
+  <DESCRIPTION>
+    Improve backend performance and API design by eliminating inefficient queries,
+    adding missing endpoints, and enhancing overall contract consistency.
+  </DESCRIPTION>
+
+  <SCOPE>
+    <AREA>Backend</AREA>
+    <COMPONENTS>
+      <COMPONENT>Repositories</COMPONENT>
+      <COMPONENT>Services</COMPONENT>
+      <COMPONENT>Controllers</COMPONENT>
+      <COMPONENT>API Routes</COMPONENT>
+    </COMPONENTS>
+  </SCOPE>
+
+  <DETAILS>
+
+    <OPTIMIZATION name="N+1 Query Fix">
+      <ISSUE>
+        Draft loading in studio performs multiple sequential queries for article details.
+      </ISSUE>
+      <REQUIREMENT>
+        Replace with batched queries or include relations in a single query.
+      </REQUIREMENT>
+      <GOAL>Reduce database round trips and improve performance</GOAL>
+    </OPTIMIZATION>
+
+    <API_IMPROVEMENT name="Bookmark Status Endpoint">
+      <REQUIREMENT>
+        Add endpoint to check bookmark status for a specific article.
+      </REQUIREMENT>
+      <EXAMPLE>
+        GET /articles/:id/bookmark-status
+      </EXAMPLE>
+      <GOAL>
+        Avoid fetching full bookmark list on frontend and filtering manually.
+      </GOAL>
+    </API_IMPROVEMENT>
+
+    <OPTIMIZATION name="View Tracking">
+      <ISSUE>
+        View tracking currently stored in memory.
+      </ISSUE>
+      <REQUIREMENT>
+        Evaluate persistence strategy (database or external store).
+      </REQUIREMENT>
+      <GOAL>Ensure scalability and durability</GOAL>
+    </OPTIMIZATION>
+
+    <CONTRACT_IMPROVEMENT>
+      <REQUIREMENT>
+        Reduce DTO duplication between backend and frontend.
+      </REQUIREMENT>
+      <REQUIREMENT>
+        Standardize API response structure.
+      </REQUIREMENT>
+      <REQUIREMENT>
+        Ensure consistency across endpoints.
+      </REQUIREMENT>
+    </CONTRACT_IMPROVEMENT>
+
+  </DETAILS>
+
+  <OUTPUT>
+    <ITEM>Optimized backend queries (no N+1)</ITEM>
+    <ITEM>New endpoint for bookmark status</ITEM>
+    <ITEM>Improved API contract consistency</ITEM>
+    <ITEM>Scalable view tracking approach</ITEM>
+  </OUTPUT>
+
+</TASK>

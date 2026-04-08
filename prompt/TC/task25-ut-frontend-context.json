@@ -1,0 +1,35 @@
+{
+  "articleUrls": {
+    "published": "http://localhost:3000/articles/ut-article-published",
+    "hiddenPanel": "http://localhost:3000/articles/ut-article-hidden-panel",
+    "studio": "http://localhost:3000/studio"
+  },
+  "loginUsers": {
+    "author": {
+      "email": "task25.author@example.com",
+      "password": "Password123!"
+    },
+    "viewer": {
+      "email": "task25.viewer@example.com",
+      "password": "Password123!"
+    }
+  },
+  "ids": {
+    "authorUserId": "ut-user-author",
+    "secondAuthorUserId": "ut-user-author-2",
+    "viewerUserId": "ut-user-viewer",
+    "editorUserId": "ut-user-editor",
+    "rootCategoryId": "ut-category-root",
+    "childCategoryId": "ut-category-child",
+    "secondaryCategoryId": "ut-category-secondary",
+    "publishedArticleId": "ut-article-published",
+    "draftArticleId": "ut-article-draft",
+    "hiddenPanelArticleId": "ut-article-hidden-panel",
+    "primaryTagId": "ut-tag-knowledge-base",
+    "emptyTagId": "ut-tag-empty-state",
+    "authorCommentId": "ut-comment-author",
+    "viewerCommentId": "ut-comment-viewer",
+    "replyCommentId": "ut-comment-reply",
+    "draftVersionId": "ut-version-draft-1"
+  }
+}

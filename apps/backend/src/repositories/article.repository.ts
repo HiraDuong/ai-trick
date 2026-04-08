@@ -239,6 +239,17 @@ export async function updateArticleWithVersionSnapshot(params: {
   });
 }
 
+export async function incrementArticleViews(articleId: string): Promise<void> {
+  await prisma.article.update({
+    where: { id: articleId },
+    data: {
+      views: {
+        increment: 1,
+      },
+    },
+  });
+}
+
 export async function deleteArticle(articleId: string): Promise<{ id: string; title: string }> {
   return prisma.article.delete({
     where: { id: articleId },

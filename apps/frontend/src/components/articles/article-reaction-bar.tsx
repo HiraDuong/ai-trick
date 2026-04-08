@@ -21,13 +21,18 @@ const reactionLabels: Record<ReactionType, string> = {
 
 export function ArticleReactionBar({ articleId, initialSummary }: ArticleReactionBarProps) {
   const [summary, setSummary] = useState<ReactionSummaryDto | null>(initialSummary);
+  const [hasToken, setHasToken] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<ReactionType | null>(null);
 
   useEffect(() => {
     async function syncSummary() {
-      if (!getStoredAccessToken()) {
+      const token = getStoredAccessToken();
+      setHasToken(Boolean(token));
+
+      if (!token) {
         setSummary(initialSummary);
+        setMessage(null);
         return;
       }
 
@@ -81,7 +86,7 @@ export function ArticleReactionBar({ articleId, initialSummary }: ArticleReactio
               key={type}
               type="button"
               onClick={() => void handleReact(type)}
-              disabled={submitting !== null}
+              disabled={submitting !== null || !hasToken}
               className={`rounded-[1.5rem] border px-4 py-4 text-left transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
                 isActive
                   ? "border-[var(--color-accent)] bg-[color:color-mix(in_srgb,var(--color-accent)_12%,white)]"
@@ -94,6 +99,7 @@ export function ArticleReactionBar({ articleId, initialSummary }: ArticleReactio
           );
         })}
       </div>
+      {!hasToken ? <p className="mt-4 text-sm text-[var(--color-muted)]">Log in to react to this article.</p> : null}
       {message ? <p className="mt-4 text-sm text-[var(--color-danger)]">{message}</p> : null}
     </article>
   );
