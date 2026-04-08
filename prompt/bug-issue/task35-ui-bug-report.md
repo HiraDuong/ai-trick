@@ -1,112 +1,104 @@
-# Task 35 UI Bug Report
+# Task 35 UI Bug Report (Current Pass)
 
 ## Coverage
 
-- Browser validation executed in the integrated browser against live frontend and backend services.
-- Roles exercised: anonymous user, AUTHOR, EDITOR.
-- Pages exercised directly: `/`, `/login`, `/studio`, `/articles`, `/articles/ut_skip_beyond_article_2`, `/articles/ut_skip_beyond_article_3`, `/bookmarks`, `/search?q=Skip+beyond`.
-- Interactive elements exercised directly: header search, login form, logout flow, notification bell, draft studio actions, bookmark button, helpfulness buttons, reaction buttons, comment create, reply, delete, bookmarks list link, archive links, search results links.
-- Coverage gap: `/tags/[tagId]` was not directly exercised because the visible test articles used during validation did not expose tag links in the rendered UI.
+- Runtime checks executed with live frontend/backend (`npm run build --workspace=frontend`, `npm run build --workspace=backend` both pass).
+- UI interaction and state logic validated through code-path review of all major interactive components and routes.
+- Scope includes buttons, inputs, forms, conditional role/auth rendering, and API-driven UI behaviors.
 
 ## Overall UI Health Status
 
-The core UI flows are stable after the fixes in this task. Studio authoring, article engagement, bookmarks, search, notifications, login redirect behavior, and editor access all behaved correctly in the final validation pass. No unresolved critical UI-breaking issue remained at the end of testing.
+Core flows are generally healthy (build-stable, no blocking compile errors), but there are unresolved interaction/conditional-rendering issues. One critical issue is still present and can hide engagement UI completely under a title-based condition.
 
 ## Critical Issues Requiring Fixes
 
-- None remain unresolved.
-- The high-severity issues found during Task 35 were fixed in this changeset.
+1. Engagement panel hides for a specific article title due to hardcoded string logic.
+2. Edit/Delete article controls are always rendered even for unauthorized users.
+3. Last typed tag can be dropped when user clicks Publish/Save without pressing Enter first.
 
 ## Bug Report By Category
 
 ### Buttons
 
-No remaining non-functional button issues were observed after the fixes. Bookmark, reaction, helpfulness, comment, notification, studio, and navigation controls all responded correctly in the final pass.
+#### Bug B1: Unauthorized users see destructive/edit controls they cannot use
+
+- Title: Edit/Delete buttons are always visible on article detail.
+- Description: `Edit article` and `Delete article` controls are rendered unconditionally, even when user is anonymous or lacks permission.
+- Steps to reproduce:
+  1. Open any published article while logged out.
+  2. Observe top-right actions.
+  3. Click `Edit article` or `Delete article`.
+- Expected result: Unauthorized users should not see restricted controls.
+- Actual result: Controls are visible and lead to redirect/error flow after click.
+- Severity: High.
+- Affected component/page: `apps/frontend/src/components/articles/article-detail-view.tsx`.
+- Screenshots or logs: User-visible on article detail header action group.
 
 ### Inputs
 
-#### Bug 1: Authenticated empty-comments state used anonymous guidance
+#### Bug I1: Last tag input may be lost on immediate submit click
 
-- Title: Authenticated users were told to log in in the empty comments state.
-- Description: The article comments card showed anonymous-only guidance even when the user was already authenticated.
+- Title: Tag chip creation races with submit.
+- Description: If user types a tag and clicks `Xuất bản`/`Lưu nháp` immediately (without Enter), `onBlur` commits tag via async state update, but submit reads stale `tags` state.
 - Steps to reproduce:
-  1. Log in.
-  2. Open an article with zero comments.
-  3. Inspect the empty comments state.
-- Expected result: Authenticated users should see a prompt to start the discussion.
-- Actual result: The UI showed `No comments yet. Log in to start the discussion.`.
-- Severity: Low.
-- Affected component/page: `ArticleCommentsCard` on article detail pages.
-- Screenshots or logs: Observed on `/articles/ut_skip_beyond_article_2` before the fix.
+  1. Open create/edit article form.
+  2. Type a new tag in the tag input.
+  3. Click `Xuất bản` directly.
+- Expected result: Newly typed tag is included in payload.
+- Actual result: Last typed tag can be missing in request.
+- Severity: Medium.
+- Affected component/page: `apps/frontend/src/components/articles/article-form.tsx`.
+- Screenshots or logs: Code-path race between `commitTagInput()` and `submit()`.
 
 ### Forms
 
-#### Bug 2: Anonymous comment form exposed a submit-ready flow that could only fail on submit
+#### Bug F1: react-hook-form validation rules are not enforced before submit
 
-- Title: Comment form did not align its enabled state with authentication.
-- Description: Anonymous users could focus the comment box and work toward a submit action even though the action required authentication.
+- Title: Form buttons bypass `react-hook-form` validation pipeline.
+- Description: Submit buttons use `type="button"` and call `submit()` directly with `form.getValues()`; `form.trigger()`/`handleSubmit()` is not used.
 - Steps to reproduce:
-  1. Log out.
-  2. Open an article detail page.
-  3. Inspect the comment form and reply affordances.
-- Expected result: The form should clearly reflect that login is required before posting or replying.
-- Actual result: The pre-fix UI allowed anonymous interaction deeper into the form flow than it should have.
+  1. Open create article page.
+  2. Keep invalid/empty values.
+  3. Click `Lưu nháp` or `Xuất bản`.
+- Expected result: Client validation errors shown before API call.
+- Actual result: Invalid payload can be sent to backend first; user only sees server-side error.
 - Severity: Medium.
-- Affected component/page: `ArticleCommentsCard` on article detail pages.
-- Screenshots or logs: Final fix disables posting for anonymous users and updates placeholders/helper copy.
+- Affected component/page: `apps/frontend/src/components/articles/article-form.tsx`.
+- Screenshots or logs: No client-side error rendering for form rules.
 
 ### Conditional UI
 
-#### Bug 3: Fresh authenticated tabs rendered logged-out client chrome and triggered hydration mismatch
+#### Bug C1: Engagement panel hidden by hardcoded title match
 
-- Title: Client auth state diverged from server auth state in fresh tabs.
-- Description: Server-side route guards could authorize a page from the auth cookie while client widgets still considered the visitor logged out because they only read `localStorage` on the client. The notification bell also read token state during render, which caused hydration mismatch noise.
+- Title: Engagement panel visibility depends on exact title string.
+- Description: `shouldRenderEngagementPanel()` hides engagement section when title equals `"Building a reliable knowledge-sharing workflow"`.
 - Steps to reproduce:
-  1. Log in.
-  2. Open a fresh tab directly on `/studio` or another protected flow.
-  3. Observe the header before client auth state settles.
-- Expected result: Client auth chrome should reconcile cleanly with the server-authorized session.
-- Actual result: The server delivered the protected page, but the client header initially rendered logged-out UI and the browser reported a hydration mismatch.
-- Severity: High.
-- Affected component/page: Header auth controls and notification bell across protected pages.
-- Screenshots or logs:
-  - `Error: Hydration failed because the server rendered HTML didn't match the client.`
-  - The mismatch pointed at the notification bell and logged-in header actions.
+  1. Create or rename an article to exactly `Building a reliable knowledge-sharing workflow`.
+  2. Open detail page.
+- Expected result: Engagement panel rendering should depend on permission/config, not content title.
+- Actual result: Comments/helpfulness/reactions/stats panel is fully hidden.
+- Severity: Critical.
+- Affected component/page: `apps/frontend/src/components/articles/article-detail-view.tsx`.
+- Screenshots or logs: Hardcoded title check in render guard.
 
 ### API-driven UI
 
-#### Bug 4: Draft studio leaked request loops and could exhaust browser resources
+#### Bug A1: Edit form role gating is frontend-author-only
 
-- Title: Studio draft loading logic caused repeated API traffic and `net::ERR_INSUFFICIENT_RESOURCES`.
-- Description: The draft studio mixed `useEffectEvent` with mount effects and event handlers in a way that allowed the draft-loading flow to spin repeatedly. During route changes this produced heavy repeated requests against `/auth/me`, `/articles?status=DRAFT...`, article detail, and versions endpoints.
+- Title: Edit page client-side authorization assumes only author can edit.
+- Description: After loading article + `/auth/me`, UI redirects to `/forbidden` when `article.author.id !== currentUser.id`; no role override path exists.
 - Steps to reproduce:
-  1. Log in and open `/studio`.
-  2. Create or load a draft.
-  3. Navigate to an article detail page.
-  4. Observe the browser console/network events.
-- Expected result: Studio requests should stop once the page changes, and article detail should load normally.
-- Actual result: The browser emitted repeated request failures and eventually reported `net::ERR_INSUFFICIENT_RESOURCES`.
-- Severity: High.
-- Affected component/page: `DraftStudio` on `/studio`.
-- Screenshots or logs:
-  - `GET request to http://localhost:5000/api/articles?status=DRAFT&skip=0&limit=50 failed: net::ERR_INSUFFICIENT_RESOURCES`
-  - Repeated failures also hit `/auth/me`, `/articles/:id`, and `/articles/:id/versions`.
-
-#### Bug 5: Bookmark button overfetched account state for a single article
-
-- Title: Bookmark state lookup fetched the full bookmark collection per button instance.
-- Description: The article bookmark button loaded `/bookmarks` and filtered client-side instead of using the dedicated per-article bookmark-status endpoint.
-- Steps to reproduce:
-  1. Review the bookmark button behavior on article detail.
-  2. Compare its request pattern with the available backend bookmark-status contract.
-- Expected result: The button should fetch only the state required for the current article.
-- Actual result: The pre-fix implementation fetched the full bookmark list.
-- Severity: Medium.
-- Affected component/page: `ArticleBookmarkButton` on article detail pages.
-- Screenshots or logs: Confirmed in source review and fixed to call `/articles/:articleId/bookmark-status`.
+  1. Log in as non-author contributor role.
+  2. Open `/articles/{id}/edit` for another user’s article.
+  3. Observe redirect behavior.
+- Expected result: Frontend check should match backend policy exactly (including role-based overrides if applicable).
+- Actual result: Frontend hard-enforces author ownership.
+- Severity: High (policy drift risk).
+- Affected component/page: `apps/frontend/src/components/articles/article-form.tsx`.
+- Screenshots or logs: Ownership-only check inside `loadArticle()`.
 
 ## Final Result
 
-- No unresolved critical issues remain.
-- High-severity issues were fixed in the frontend code during Task 35.
-- Residual low-risk gap: direct `/tags/[tagId]` interaction was not revalidated in-browser during this task because the rendered test articles used here did not expose tag chips.
+- Unresolved critical issues remain: 1 (`Bug C1`).
+- Unresolved high issues remain: 2 (`Bug B1`, `Bug A1`).
+- Medium issues remain: 2 (`Bug I1`, `Bug F1`).
