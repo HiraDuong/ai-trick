@@ -63,10 +63,12 @@ test:
   image:
     name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
+  variables:
+    DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   before_script:
-    - mkdir -p /kaniko/.docker
+    - mkdir -p "$DOCKER_CONFIG"
     - |
-      cat > /kaniko/.docker/config.json <<EOF
+      cat > "$DOCKER_CONFIG/config.json" <<EOF
       {"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}
       EOF
 
