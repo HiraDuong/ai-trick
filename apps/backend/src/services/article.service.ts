@@ -30,6 +30,7 @@ import type {
   DeleteArticleResponseDto,
   UpdateArticleRequestDto,
 } from "../types/article.types";
+import { canManageArticle } from "../utils/studio-access.utils";
 import { createHttpError } from "../utils/error.utils";
 import { assertCapability, assertOwnershipOrThrow } from "./authorization.service";
 
@@ -241,7 +242,9 @@ async function getManageableArticleAccess(articleId: string, user: Authenticated
     throw createHttpError(404, "Article not found");
   }
 
-  assertOwnershipOrThrow(article.authorId, user.id);
+  if (!canManageArticle(user, article.authorId)) {
+    assertOwnershipOrThrow(article.authorId, user.id);
+  }
 }
 
 function stableStringify(value: unknown): string {

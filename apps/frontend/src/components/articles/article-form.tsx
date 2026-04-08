@@ -264,7 +264,7 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
                 disabled={isSubmitting}
                 className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] disabled:opacity-60"
               >
-                {isSubmitting ? "Saving..." : "Lưu nháp"}
+                {isSubmitting ? "Saving..." : "Save draft"}
               </button>
               <button
                 type="button"
@@ -272,7 +272,7 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
                 disabled={isSubmitting}
                 className="rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-[var(--color-accent-contrast)] disabled:opacity-60"
               >
-                {isSubmitting ? "Publishing..." : "Xuất bản"}
+                {isSubmitting ? "Publishing..." : "Publish"}
               </button>
             </div>
           </form>

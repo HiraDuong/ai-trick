@@ -23,6 +23,10 @@ interface CategoryOption {
   name: string;
 }
 
+interface ArticleVersionListResponseDto {
+  items: ArticleVersionDto[];
+}
+
 function flattenCategories(nodes: CategoryNodeDto[], trail: string[] = []): CategoryOption[] {
   return nodes.flatMap((node) => {
     const label = [...trail, node.name].join(" / ");
@@ -62,6 +66,18 @@ function buildContentPayload(text: string): string[] {
     .filter(Boolean);
 }
 
+function readVersionItems(payload: ArticleVersionDto[] | ArticleVersionListResponseDto | null | undefined): ArticleVersionDto[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload && Array.isArray(payload.items)) {
+    return payload.items;
+  }
+
+  return [];
+}
+
 export function DraftStudio({ categories }: DraftStudioProps) {
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
   const defaultCategoryId = categoryOptions[0]?.id ?? "";
@@ -89,13 +105,13 @@ export function DraftStudio({ categories }: DraftStudioProps) {
       return;
     }
 
-    const versionsResult = await fetchAuthenticatedApi<ArticleVersionDto[]>(`/articles/${articleId}/versions`);
+    const versionsResult = await fetchAuthenticatedApi<ArticleVersionDto[] | ArticleVersionListResponseDto>(`/articles/${articleId}/versions`);
     setSelectedArticleId(articleId);
     setTitle(articleResult.data.title);
     setCategoryId(articleResult.data.category.id);
     setContent(extractText(articleResult.data.content));
     setDirty(false);
-    setVersions(versionsResult.ok ? versionsResult.data : []);
+    setVersions(versionsResult.ok ? readVersionItems(versionsResult.data) : []);
     setMessage(null);
   }, []);
 
@@ -194,9 +210,9 @@ export function DraftStudio({ categories }: DraftStudioProps) {
     setDirty(false);
     setSaving(false);
     setMessage("Draft saved.");
-    const versionsResult = await fetchAuthenticatedApi<ArticleVersionDto[]>(`/articles/${selectedArticleId}/versions`);
+    const versionsResult = await fetchAuthenticatedApi<ArticleVersionDto[] | ArticleVersionListResponseDto>(`/articles/${selectedArticleId}/versions`);
     if (versionsResult.ok) {
-      setVersions(versionsResult.data);
+      setVersions(readVersionItems(versionsResult.data));
     }
   }, [categoryId, content, dirty, selectedArticleId, title]);
 
@@ -264,7 +280,7 @@ export function DraftStudio({ categories }: DraftStudioProps) {
       return;
     }
 
-    setVersions(result.data);
+    setVersions(readVersionItems(result.data));
     await loadArticle(selectedArticleId);
     setMessage("Version restored.");
   }
@@ -421,12 +437,15 @@ export function DraftStudio({ categories }: DraftStudioProps) {
           <aside className="rounded-[2rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-5 shadow-[0_18px_60px_rgba(33,37,41,0.05)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">Version history</p>
             <div className="mt-4 space-y-3">
-              {versions.length === 0 ? (
+              {!Array.isArray(versions) || versions.length === 0 ? (
                 <p className="text-sm leading-7 text-[var(--color-muted)]">No saved versions yet.</p>
               ) : (
-                versions.map((version) => (
+                versions.map((version, index) => (
                   <article key={version.id} className="rounded-[1.25rem] border border-[var(--color-line)] bg-white p-4">
-                    <p className="text-sm font-semibold text-[var(--color-foreground)]">{version.updatedBy.name}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-accent)]">
+                      Version {versions.length - index}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--color-foreground)]">{version.updatedBy.name}</p>
                     <p className="mt-2 text-xs uppercase tracking-[0.14em] text-[var(--color-muted)]">
                       {formatArticleDate(version.updatedAt)}
                     </p>

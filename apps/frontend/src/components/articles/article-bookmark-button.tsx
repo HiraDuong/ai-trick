@@ -16,6 +16,10 @@ export function ArticleBookmarkButton({ articleId }: ArticleBookmarkButtonProps)
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const buttonClassName = bookmarked
+    ? "inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--color-accent)] bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent-contrast)] shadow-[0_12px_32px_rgba(17,107,99,0.22)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)] hover:border-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+    : "inline-flex min-h-10 items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60";
+
   useEffect(() => {
     async function syncBookmarkState() {
       const token = getStoredAccessToken();
@@ -70,9 +74,10 @@ export function ArticleBookmarkButton({ articleId }: ArticleBookmarkButtonProps)
         type="button"
         onClick={() => void handleToggleBookmark()}
         disabled={loading || !hasToken}
-        className="inline-flex items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+        aria-pressed={bookmarked}
+        className={buttonClassName}
       >
-        {!hasToken ? "Log in to save" : bookmarked ? "Saved" : "Save article"}
+        {!hasToken ? "Log in to bookmark" : bookmarked ? "Bookmarked" : "Bookmark article"}
       </button>
       {message ? <p className="text-xs text-[var(--color-danger)]">{message}</p> : null}
     </div>

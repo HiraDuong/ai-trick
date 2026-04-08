@@ -2,13 +2,13 @@
 // Vu Huy Hoang - Dev2
 import Link from "next/link";
 import type { ApiResult } from "@/lib/api";
-import type { ArticleDetailDto, ArticleStatsDto, CommentListResponseDto, HelpfulnessSummaryDto, ReactionSummaryDto } from "@/lib/api-types";
+import type { ArticleDetailDto, ArticleStatsDto, AuthUserDto, CommentListResponseDto, HelpfulnessSummaryDto, ReactionSummaryDto } from "@/lib/api-types";
 import { formatArticleDate, formatViewCount } from "@/lib/format";
-import { buildTagHref } from "@/lib/tag-links";
 import { ArticleBookmarkButton } from "./article-bookmark-button";
 import { ArticleDeleteButton } from "./article-delete-button";
 import { ArticleEngagementPanel } from "./article-engagement-panel";
 import { ArticleContentRenderer } from "./article-content-renderer";
+import { ArticleTagManager } from "./article-tag-manager";
 
 interface ArticleDetailViewProps {
   article: ArticleDetailDto;
@@ -16,32 +16,37 @@ interface ArticleDetailViewProps {
   helpfulnessResult: ApiResult<HelpfulnessSummaryDto>;
   statsResult: ApiResult<ArticleStatsDto>;
   reactionsResult: ApiResult<ReactionSummaryDto>;
+  currentUser: AuthUserDto | null;
 }
 
 function shouldRenderEngagementPanel(article: ArticleDetailDto): boolean {
   return article.title !== "Building a reliable knowledge-sharing workflow";
 }
 
-export function ArticleDetailView({ article, commentsResult, helpfulnessResult, statsResult, reactionsResult }: ArticleDetailViewProps) {
+export function ArticleDetailView({ article, commentsResult, helpfulnessResult, statsResult, reactionsResult, currentUser }: ArticleDetailViewProps) {
+  const canManageArticle = Boolean(currentUser && (currentUser.role === "EDITOR" || currentUser.id === article.author.id));
+
   return (
     <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 rounded-[1.75rem] border border-[var(--color-line)] bg-[color:color-mix(in_srgb,var(--color-surface)_92%,white)] p-4 shadow-[0_18px_50px_rgba(33,37,41,0.06)] lg:flex-row lg:items-center lg:justify-between">
           <Link
             href="/articles"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-5 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
             Back to archive
           </Link>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/articles/${article.id}/edit`}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-            >
-              Edit article
-            </Link>
-            <ArticleDeleteButton articleId={article.id} />
+          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+            {canManageArticle ? (
+              <Link
+                href={`/articles/${article.id}/edit`}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-5 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              >
+                Edit article
+              </Link>
+            ) : null}
+            {canManageArticle ? <ArticleDeleteButton articleId={article.id} /> : null}
             <ArticleBookmarkButton articleId={article.id} />
             <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-contrast)]">
               {article.status}
@@ -50,7 +55,7 @@ export function ArticleDetailView({ article, commentsResult, helpfulnessResult, 
         </div>
 
         <section className="rounded-[2.25rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-8 shadow-[0_24px_80px_rgba(33,37,41,0.08)] sm:p-10">
-          <div className="space-y-5">
+          <div className="space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--color-muted)]">
               {article.category.name}
             </p>
@@ -62,22 +67,13 @@ export function ArticleDetailView({ article, commentsResult, helpfulnessResult, 
               <span>{formatArticleDate(article.publishedAt ?? article.createdAt)}</span>
               <span>{formatViewCount(article.views)}</span>
             </div>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {article.tags.length > 0 ? (
-                article.tags.map((tag) => (
-                  <Link
-                    key={tag.id}
-                    href={buildTagHref(tag.id, tag.name)}
-                    className="rounded-full bg-[color:color-mix(in_srgb,var(--color-accent)_12%,white)] px-3 py-1 text-xs font-medium text-[var(--color-accent)]"
-                  >
-                    #{tag.name}
-                  </Link>
-                ))
-              ) : (
-                <span className="rounded-full bg-[var(--color-background)] px-3 py-1 text-xs font-medium text-[var(--color-muted)]">
-                  No tags yet
-                </span>
-              )}
+            <div className="rounded-[1.75rem] border border-[color:color-mix(in_srgb,var(--color-accent)_20%,white)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-accent)_8%,white),white_55%)] p-4 sm:p-5">
+              <ArticleTagManager
+                articleId={article.id}
+                articleAuthorId={article.author.id}
+                initialTags={article.tags}
+                currentUser={currentUser}
+              />
             </div>
           </div>
 

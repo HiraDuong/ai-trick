@@ -1,0 +1,65 @@
+<task id="fix-article-detail-action-clarity">
+
+  <context>
+    <description>
+      The article detail page now includes tag-management and bookmark actions,
+      but the bookmark CTA can be confused with the global Bookmarks navigation link.
+      Action buttons also lacked a clear active visual state after interaction.
+    </description>
+  </context>
+
+  <problem>
+
+    <summary>
+      Article-detail actions are visually ambiguous and do not clearly show which action is active.
+    </summary>
+
+    <details>
+      <issue>
+        The navbar Bookmarks link is a destination page, while the article-detail bookmark button is an action,
+        but the wording made that distinction weak.
+      </issue>
+      <issue>
+        After interacting with detail actions, active state feedback was not strong enough to confirm selection.
+      </issue>
+    </details>
+
+    <expected_behavior>
+      The article-detail bookmark button should read like an action on the current article.
+      Active actions on the detail page should visibly change color so the selected state is obvious.
+    </expected_behavior>
+
+    <actual_behavior>
+      Users can mistake the bookmark behavior for the global bookmarks list entry point,
+      and detail action buttons remain too visually similar before and after interaction.
+    </actual_behavior>
+
+  </problem>
+
+  <tasks>
+
+    <task>
+      <title>Clarify article bookmark CTA</title>
+      <requirements>
+        <requirement>Use article-specific wording for the detail bookmark button</requirement>
+        <requirement>Keep navbar Bookmarks as a separate navigation affordance</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Strengthen detail action active states</title>
+      <requirements>
+        <requirement>Apply a clear active color to the selected action</requirement>
+        <requirement>Keep inactive actions visually quieter than the active one</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Bookmark action on article detail is no longer confused with the navbar Bookmarks link</criteria>
+    <criteria>Bookmarked state uses a distinct active visual style</criteria>
+    <criteria>Add Tag editing state uses a distinct active visual style</criteria>
+  </acceptance_criteria>
+
+</task>

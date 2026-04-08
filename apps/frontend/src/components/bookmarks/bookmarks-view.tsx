@@ -8,6 +8,43 @@ import type { BookmarkListItemDto } from "@/lib/api-types";
 import { fetchAuthenticatedApi, getStoredAccessToken, subscribeToAuthTokenChanges } from "@/lib/auth";
 import { formatArticleDate } from "@/lib/format";
 
+const versionWordMap: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
+function toPlainTextPreview(value: string, maxLength = 220): string {
+  const normalizedVersionText = value.replace(/\bversion\s+(one|two|three|four|five|six|seven|eight|nine|ten)\b/gi, (_, word: string) => {
+    const versionNumber = versionWordMap[word.toLowerCase()];
+    return `Version ${versionNumber}`;
+  });
+
+  const text = normalizedVersionText
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength).trimEnd()}...`;
+}
+
 export function BookmarksView() {
   const [bookmarks, setBookmarks] = useState<BookmarkListItemDto[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -65,6 +102,11 @@ export function BookmarksView() {
                 key={bookmark.articleId}
                 className="rounded-[2rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-6 shadow-[0_20px_60px_rgba(33,37,41,0.08)]"
               >
+                {(() => {
+                  const previewText = toPlainTextPreview(bookmark.excerpt);
+
+                  return (
+                    <>
                 <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
                   <span>Saved {formatArticleDate(bookmark.createdAt)}</span>
                 </div>
@@ -74,7 +116,10 @@ export function BookmarksView() {
                 >
                   {bookmark.title}
                 </Link>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{bookmark.excerpt}</p>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{previewText || "No excerpt available."}</p>
+                    </>
+                  );
+                })()}
               </article>
             ))}
           </section>

@@ -10,6 +10,8 @@
   --accent-strong: #0c554f;
   --accent-contrast: #f7f0e7;
   --danger: #b04f39;
+  --site-header-height: 16.5rem;
+  --site-header-offset: var(--site-header-height);
 }
 
 @theme inline {
@@ -32,9 +34,12 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--site-header-offset);
 }
 
 body {
+  min-height: 100vh;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
   background-image:
@@ -46,6 +51,29 @@ body {
 
 a {
   text-decoration: none;
+}
+
+:where(button, [type="button"], [type="submit"], [type="reset"], [role="button"]) {
+  cursor: pointer;
+}
+
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+  cursor: not-allowed;
+}
+
+:where(button, input, select, textarea, [contenteditable="true"]) {
+  caret-color: var(--accent);
+}
+
+:where(a[href], button, select, textarea, [contenteditable="true"]):is(:focus, :focus-visible) {
+  outline: 2px solid rgba(17, 107, 99, 0.42) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(17, 107, 99, 0.14) !important;
+}
+
+:where(input):is(:focus, :focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 ::selection {

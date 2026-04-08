@@ -1,0 +1,21 @@
+Bug 4: bookmarks active-state mismatch and noisy preview rendering
+
+Scope
+- Shared header primary nav
+- Bookmarks page preview cards
+- Version history surfaces
+
+Observed issues
+- The header nav always styled Open archive as active, even on /bookmarks.
+- Bookmark excerpts could show raw HTML tags instead of clean preview text.
+- Version history lacked explicit numeric labels, making versions harder to scan.
+
+Fix applied
+- Added a route-aware primary nav client component so the active route is highlighted correctly.
+- Cleaned bookmark excerpts into readable plain-text previews.
+- Added numeric version labels across version history panels.
+
+Validation target
+- /bookmarks highlights Bookmarks in the header.
+- Bookmark cards show plain text previews.
+- Version history panels show Version 1, Version 2, Version 3 style labels.
