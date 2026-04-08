@@ -60,38 +60,38 @@ test:
 
 .docker_job:
   stage: docker
-  image: docker:24-cli
-  variables:
-    DOCKER_HOST: "tcp://docker:2375"
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:24-dind
-      alias: docker
-      command: ["--tls=false"]
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   before_script:
-    - docker info
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - mkdir -p /kaniko/.docker
+    - |
+      cat > /kaniko/.docker/config.json <<EOF
+      {"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}
+      EOF
 
 docker_backend:
   extends: .docker_job
   needs: ["build"]
   script:
-    - docker build -f apps/backend/Dockerfile -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE/backend:latest" .
-    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
-    - docker push "$CI_REGISTRY_IMAGE/backend:latest"
+    - |
+      /kaniko/executor \
+        --context "$CI_PROJECT_DIR" \
+        --dockerfile "$CI_PROJECT_DIR/apps/backend/Dockerfile" \
+        --destination "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" \
+        --destination "$CI_REGISTRY_IMAGE/backend:latest"
 
 docker_frontend:
   extends: .docker_job
   needs: ["build"]
   script:
     - |
-      docker build -f apps/frontend/Dockerfile \
+      /kaniko/executor \
+        --context "$CI_PROJECT_DIR" \
+        --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
         --build-arg "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:4000}" \
-        -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" \
-        -t "$CI_REGISTRY_IMAGE/frontend:latest" \
-        .
-    - docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
-    - docker push "$CI_REGISTRY_IMAGE/frontend:latest"
+        --destination "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" \
+        --destination "$CI_REGISTRY_IMAGE/frontend:latest"
 
 deploy_production:
   stage: deploy
