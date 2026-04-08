@@ -1,0 +1,115 @@
+<task id="fix-studio-access-guard-mismatch">
+
+  <context>
+    <description>
+      The frontend studio flow was hardened in Task 27 for server-side protection,
+      but the role checks remained AUTHOR-only while Cluster 2 policy allows AUTHOR and EDITOR
+      to access edit flows. Backend article and version management also still enforced AUTHOR-only logic.
+    </description>
+  </context>
+
+  <problem>
+
+    <summary>
+      EDITOR users were blocked from /studio and related article editing flows,
+      even though the expected authorization policy allows AUTHOR or EDITOR access.
+    </summary>
+
+    <details>
+      <issue>
+        Frontend server guard used AUTHOR-only logic for /studio.
+      </issue>
+      <issue>
+        Client draft studio guard duplicated the AUTHOR-only restriction.
+      </issue>
+      <issue>
+        Backend article management and version management services still enforced AUTHOR-only access.
+      </issue>
+      <issue>
+        Proxy initially blocked only unauthenticated users, so VIEWER users could still hit the streamed redirect path.
+      </issue>
+    </details>
+
+    <expected_behavior>
+      AUTHOR and EDITOR users should be able to access /studio and perform article edit operations.
+      Unauthenticated users should be redirected to login before render.
+      Authenticated but unauthorized users should still be blocked appropriately.
+    </expected_behavior>
+
+    <actual_behavior>
+      EDITOR users were rejected by frontend and backend AUTHOR-only checks.
+      VIEWER users were not blocked early enough at the proxy layer for /studio.
+    </actual_behavior>
+
+  </problem>
+
+  <possible_causes>
+
+    <cause>
+      Role checks were copied into multiple frontend layers instead of using a shared AUTHOR or EDITOR helper.
+    </cause>
+
+    <cause>
+      Backend article and version services still reflected an older AUTHOR-only interpretation.
+    </cause>
+
+    <cause>
+      Proxy guard only checked cookie presence and not the role encoded in the access token payload.
+    </cause>
+
+    <cause>
+      Cluster 2 policy in prompt context was not fully propagated into implementation.
+    </cause>
+
+  </possible_causes>
+
+  <tasks>
+
+    <task>
+      <title>Centralize frontend studio access logic</title>
+      <requirements>
+        <requirement>Add a shared helper for AUTHOR and EDITOR studio access</requirement>
+        <requirement>Use the shared helper in server and client studio guards</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Align backend edit permissions</title>
+      <requirements>
+        <requirement>Allow AUTHOR and EDITOR roles in article management services</requirement>
+        <requirement>Allow EDITOR to manage all content while AUTHOR remains limited to own content</requirement>
+        <requirement>Apply the same rule to version history endpoints used by studio</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Close the proxy mismatch</title>
+      <requirements>
+        <requirement>Continue redirecting unauthenticated users to login</requirement>
+        <requirement>Decode JWT payload role in proxy for /studio only</requirement>
+        <requirement>Redirect unauthorized authenticated users away from /studio before render</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Validate the authorization matrix</title>
+      <requirements>
+        <requirement>AUTHOR receives 200 for /studio</requirement>
+        <requirement>EDITOR receives 200 for /studio</requirement>
+        <requirement>VIEWER is redirected away from /studio</requirement>
+        <requirement>Unauthenticated user is redirected to login</requirement>
+        <requirement>EDITOR can update an author-owned draft and fetch its versions</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>AUTHOR can access /studio and perform edit operations</criteria>
+    <criteria>EDITOR can access /studio and perform edit operations</criteria>
+    <criteria>Unauthenticated users are redirected to login before render</criteria>
+    <criteria>VIEWER users are blocked from /studio</criteria>
+    <criteria>Frontend and backend studio access rules are aligned</criteria>
+  </acceptance_criteria>
+
+</task>

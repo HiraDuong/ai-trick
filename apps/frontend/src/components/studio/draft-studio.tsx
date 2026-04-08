@@ -12,6 +12,7 @@ import type {
 } from "@/lib/api-types";
 import { fetchAuthenticatedApi, getStoredAccessToken, subscribeToAuthTokenChanges } from "@/lib/auth";
 import { formatArticleDate } from "@/lib/format";
+import { hasStudioAccessUser } from "@/lib/studio-access";
 
 interface DraftStudioProps {
   categories: CategoryNodeDto[];
@@ -92,7 +93,7 @@ export function DraftStudio({ categories }: DraftStudioProps) {
 
   const loadDrafts = useEffectEvent(async () => {
     if (!getStoredAccessToken()) {
-      setMessage("Log in as an author to manage drafts.");
+      setMessage("Log in as an author or editor to manage drafts.");
       setDrafts([]);
       setSelectedArticleId(null);
       return;
@@ -104,8 +105,8 @@ export function DraftStudio({ categories }: DraftStudioProps) {
       return;
     }
 
-    if (userResult.data.user.role !== "AUTHOR") {
-      setMessage("Only author accounts can use the draft studio.");
+    if (!hasStudioAccessUser(userResult.data.user)) {
+      setMessage("Only author or editor accounts can use the draft studio.");
       setDrafts([]);
       setSelectedArticleId(null);
       return;
