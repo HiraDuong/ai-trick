@@ -1,36 +1,29 @@
 # Build từ chính thư mục apps/backend.
-FROM node:20-bookworm-slim AS deps
+FROM node:20-bookworm-slim AS base
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+
+FROM base AS deps
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-bookworm-slim AS builder
-WORKDIR /app
+FROM deps AS builder
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN npm run prisma:generate \
   && npm run build \
   && npm prune --omit=dev
 
-FROM node:20-bookworm-slim AS runner
-WORKDIR /app
+FROM base AS runner
 ENV NODE_ENV=production
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
-  && rm -rf /var/lib/apt/lists/* \
-  && groupadd --system --gid 1001 nodejs \
+RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs express
 
 COPY --from=builder --chown=express:nodejs /app/node_modules ./node_modules
