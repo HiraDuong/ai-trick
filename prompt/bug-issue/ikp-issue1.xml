@@ -1,0 +1,143 @@
+<task id="auth-route-guard-hardening-issue">
+
+  <context>
+    <description>
+      The system implements authentication on the frontend, but protection is mainly handled at the client-side.
+      Protected pages (e.g., studio, bookmarks) rely on client-side checks after hydration rather than server-side guards.
+      Backend APIs are currently protected via authentication middleware, but frontend route access is not consistently enforced at the server level.
+    </description>
+  </context>
+
+  <problem>
+
+    <summary>
+      Users can access protected routes at the UI level without server-side enforcement, and authentication checks occur only after client-side hydration.
+    </summary>
+
+    <details>
+      <issue>
+        Protected pages are rendered without server-side redirect or middleware guard.
+      </issue>
+      <issue>
+        Authentication and role checks are performed in client components after hydration.
+      </issue>
+      <issue>
+        Users without valid authentication can still load the page shell before being blocked by UI logic.
+      </issue>
+      <issue>
+        No Next.js middleware or server-side session validation is applied to route access.
+      </issue>
+      <issue>
+        Auth state relies on localStorage, which is not accessible at the server level.
+      </issue>
+    </details>
+
+    <expected_behavior>
+      Protected routes should be enforced at the server level, preventing unauthenticated users from accessing page content at all (via middleware or server-side redirects).
+      Authentication should be validated before rendering protected pages.
+    </expected_behavior>
+
+    <actual_behavior>
+      Protected pages are accessible initially and only restricted on the client side after hydration, resulting in weak route-level protection (UX-level only).
+    </actual_behavior>
+
+  </problem>
+
+  <possible_causes>
+
+    <cause>
+      Missing Next.js middleware for route protection
+    </cause>
+
+    <cause>
+      Lack of server-side session/token validation for protected pages
+    </cause>
+
+    <cause>
+      Authentication logic implemented only in client components
+    </cause>
+
+    <cause>
+      Reliance on localStorage for auth state, which is not accessible in server components or middleware
+    </cause>
+
+    <cause>
+      No centralized route guard mechanism for frontend routes
+    </cause>
+
+  </possible_causes>
+
+  <tasks>
+
+    <task>
+      <title>Verify frontend route protection</title>
+      <requirements>
+        <requirement>Identify all protected routes (e.g., studio, bookmarks)</requirement>
+        <requirement>Check whether any server-side middleware or redirect logic exists</requirement>
+        <requirement>Confirm authentication checks occur only after client hydration</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Implement server-side route guards</title>
+      <requirements>
+        <requirement>Add Next.js middleware to protect sensitive routes</requirement>
+        <requirement>Redirect unauthenticated users before page render</requirement>
+        <requirement>Ensure protected routes cannot be accessed without valid session/token</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Improve authentication storage mechanism</title>
+      <requirements>
+        <requirement>Migrate from localStorage-based auth to cookie-based or server-readable session</requirement>
+        <requirement>Ensure tokens are accessible in middleware/server components</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Verify backend API enforcement</title>
+      <requirements>
+        <requirement>Ensure all sensitive endpoints use authentication middleware (e.g., authenticateUser)</requirement>
+        <requirement>Validate token/session on every request</requirement>
+        <requirement>Confirm role-based authorization where applicable</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Bypass testing</title>
+      <requirements>
+        <requirement>Attempt direct API calls using Postman/curl without authentication</requirement>
+        <requirement>Attempt calls with valid token but insufficient permissions</requirement>
+        <requirement>Verify backend returns appropriate HTTP status codes (401/403)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add logging and monitoring</title>
+      <requirements>
+        <requirement>Log authentication failures at backend</requirement>
+        <requirement>Log unauthorized access attempts to protected routes</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add test coverage</title>
+      <requirements>
+        <requirement>Test unauthenticated access to protected routes</requirement>
+        <requirement>Test role-based access control</requirement>
+        <requirement>Test direct API access bypass scenarios</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Protected routes are inaccessible without authentication at server level</criteria>
+    <criteria>Unauthenticated users are redirected before page render</criteria>
+    <criteria>All backend APIs enforce authentication and authorization</criteria>
+    <criteria>No direct API bypass is possible</criteria>
+    <criteria>Auth mechanism is consistent across frontend and backend</criteria>
+  </acceptance_criteria>
+
+</task>

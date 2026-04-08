@@ -1,6 +1,7 @@
 // Luvina
 // Vu Huy Hoang - Dev2
 import { LoginForm } from "@/components/auth/login-form";
+import { redirectAuthenticatedUser } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ function readString(value: string | string[] | undefined): string {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resolvedSearchParams = await searchParams;
   const redirectTo = readString(resolvedSearchParams.redirectTo) || "/";
+  await redirectAuthenticatedUser(redirectTo);
 
   return (
     <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">

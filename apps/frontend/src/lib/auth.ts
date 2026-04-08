@@ -5,11 +5,29 @@ import type { ApiErrorResponse, ApiSuccessResponse, AuthResponseDto } from "./ap
 
 export const ACCESS_TOKEN_STORAGE_KEY = "ikp_access_token";
 export const AUTH_TOKEN_CHANGED_EVENT = "ikp-auth-token-changed";
+export const ACCESS_TOKEN_COOKIE_NAME = "ikp_access_token";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000/api";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function writeAccessTokenCookie(token: string): void {
+  if (!isBrowser()) {
+    return;
+  }
+
+  const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ACCESS_TOKEN_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secureFlag}`;
+}
+
+function clearAccessTokenCookie(): void {
+  if (!isBrowser()) {
+    return;
+  }
+
+  document.cookie = `${ACCESS_TOKEN_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
 function dispatchAuthTokenChanged(): void {
@@ -42,6 +60,7 @@ export function setStoredAccessToken(token: string): void {
   }
 
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  writeAccessTokenCookie(token);
   dispatchAuthTokenChanged();
 }
 
@@ -51,6 +70,7 @@ export function clearStoredAccessToken(): void {
   }
 
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  clearAccessTokenCookie();
   dispatchAuthTokenChanged();
 }
 
