@@ -1,5 +1,7 @@
 // Luvina
 // Vu Huy Hoang - Dev2
+"use client";
+import DOMPurify from "dompurify";
 import type { ReactNode } from "react";
 
 type JsonPrimitive = string | number | boolean | null;
@@ -114,6 +116,15 @@ interface ArticleContentRendererProps {
 }
 
 export function ArticleContentRenderer({ content }: ArticleContentRendererProps) {
+  if (typeof content === "string") {
+    return (
+      <div
+        className="prose prose-sm max-w-none text-[var(--color-foreground)]/85"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
+      />
+    );
+  }
+
   const normalizedContent = content as JsonValue;
 
   return <div className="space-y-5">{renderBlock(normalizedContent, "root")}</div>;

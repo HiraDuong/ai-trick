@@ -3,6 +3,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { createComment, getArticleComments } from "../services/comment.service";
 import type { ApiSuccessResponse } from "../types/api.types";
+import type { AuthenticatedUser } from "../types/auth.types";
 import type {
   CommentListQueryDto,
   CommentListResponseDto,
@@ -11,13 +12,17 @@ import type {
   CreateCommentRequestDto,
 } from "../types/comment.types";
 
+function readRequestUser(request: unknown): AuthenticatedUser | undefined {
+  return (request as Request & { user?: AuthenticatedUser }).user;
+}
+
 export async function createCommentController(
   request: Request<CommentRouteParamsDto, ApiSuccessResponse<CommentDto>, CreateCommentRequestDto>,
   response: Response<ApiSuccessResponse<CommentDto>>,
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await createComment(request.params.articleId, request.body, request.user);
+    const result = await createComment(request.params.articleId, request.body, readRequestUser(request));
     response.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -30,7 +35,7 @@ export async function getArticleCommentsController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await getArticleComments(request.params.articleId, request.query, request.user);
+    const result = await getArticleComments(request.params.articleId, request.query, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

@@ -2,32 +2,34 @@
 // Vu Huy Hoang - Dev2
 import type { Prisma } from "@prisma/client";
 import {
-  createArticle as createArticleRecord,
+  createArticleWithInitialVersion,
   deleteArticle as deleteArticleRecord,
   findArticleAccessById,
   findArticleDetailById,
+  findArticleVersionsByArticleId,
   findArticles,
   findCategoryById,
-  incrementArticleViews,
   updateArticle as updateArticleRecord,
+  updateArticleWithVersionSnapshot,
   type ArticleDetailRecord,
   type ArticleListRecord,
   type ArticleMutationData,
+  type ArticleVersionRecord,
 } from "../repositories/article.repository";
-import { createArticleVersion, createArticleVersionIfChanged } from "../repositories/version.repository";
 import type { AuthenticatedUser } from "../types/auth.types";
 import type {
   ArticleDetailDto,
-  ArticleListQueryDto,
   ArticleListItemDto,
+  ArticleListQueryDto,
   ArticleListResponseDto,
+  ArticleVersionItemDto,
+  ArticleVersionListResponseDto,
   CreateArticleRequestDto,
   DeleteArticleResponseDto,
   UpdateArticleRequestDto,
 } from "../types/article.types";
 import { createHttpError } from "../utils/error.utils";
-import { hasMeaningfulJsonContent } from "../utils/json-content.utils";
-import { canManageArticle, ensureStudioAccessUser, hasStudioAccessRole } from "../utils/studio-access.utils";
+import { assertCapability, assertOwnershipOrThrow } from "./authorization.service";
 
 type SupportedArticleStatus = "DRAFT" | "PUBLISHED";
 
@@ -51,9 +53,6 @@ interface ValidatedListQuery {
   status: SupportedArticleStatus;
 }
 
-const VIEW_DEDUP_WINDOW_MS = 30 * 60 * 1000;
-const articleViewTracker = new Map<string, number>();
-
 function readPayloadObject(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw createHttpError(400, "Request body must be a JSON object");
@@ -66,7 +65,6 @@ function readRequiredString(value: unknown, fieldName: string): string {
   if (typeof value !== "string") {
     throw createHttpError(400, `${fieldName} must be a string`);
   }
-
   const trimmedValue = value.trim();
   if (!trimmedValue) {
     throw createHttpError(400, `${fieldName} is required`);
@@ -78,10 +76,6 @@ function readRequiredString(value: unknown, fieldName: string): string {
 function readJsonValue(value: Prisma.InputJsonValue | undefined, fieldName: string): Prisma.InputJsonValue {
   if (value === undefined) {
     throw createHttpError(400, `${fieldName} is required`);
-  }
-
-  if (!hasMeaningfulJsonContent(value)) {
-    throw createHttpError(400, `${fieldName} cannot be empty`);
   }
 
   return value;
@@ -102,10 +96,6 @@ function parseStatus(value: string): SupportedArticleStatus {
 
 function readStatus(value: string | undefined, fallback: SupportedArticleStatus): SupportedArticleStatus {
   return value === undefined ? fallback : parseStatus(value);
-}
-
-function ensureArticleManagerUser(user: AuthenticatedUser | undefined): asserts user is AuthenticatedUser {
-  ensureStudioAccessUser(user, "Only authors or editors can manage articles");
 }
 
 function validateCreatePayload(payload: CreateArticleRequestDto | unknown): ValidatedCreateArticleInput {
@@ -137,19 +127,15 @@ function validateUpdatePayload(payload: UpdateArticleRequestDto | unknown): Vali
     }
     updateData.title = title;
   }
-
   if (Object.prototype.hasOwnProperty.call(body, "content")) {
     updateData.content = readJsonValue(body.content as Prisma.InputJsonValue | undefined, "Content");
   }
-
   if (Object.prototype.hasOwnProperty.call(body, "categoryId")) {
     updateData.categoryId = readRequiredString(body.categoryId, "Category id");
   }
-
   if (Object.prototype.hasOwnProperty.call(body, "status")) {
     updateData.status = parseStatus(readRequiredString(body.status, "Status"));
   }
-
   if (Object.keys(updateData).length === 0) {
     throw createHttpError(400, "At least one updatable field is required");
   }
@@ -201,9 +187,7 @@ function buildPublicationFields(status: SupportedArticleStatus): Pick<ArticleMut
 }
 
 function applyPublicationLifecycle(updateData: ValidatedUpdateArticleInput): ArticleMutationData {
-  return updateData.status
-    ? { ...updateData, ...buildPublicationFields(updateData.status) }
-    : { ...updateData };
+  return updateData.status ? { ...updateData, ...buildPublicationFields(updateData.status) } : { ...updateData };
 }
 
 async function ensureCategoryExists(categoryId: string): Promise<void> {
@@ -213,76 +197,51 @@ async function ensureCategoryExists(categoryId: string): Promise<void> {
   }
 }
 
-async function getOwnedArticleAccess(articleId: string, user: AuthenticatedUser | undefined): Promise<void> {
-  ensureArticleManagerUser(user);
+async function getManageableArticleAccess(articleId: string, user: AuthenticatedUser | undefined): Promise<void> {
+  assertCapability(user, "article:update:own", "You do not have permission to manage articles");
   const article = await findArticleAccessById(articleId);
   if (!article) {
     throw createHttpError(404, "Article not found");
   }
-  if (!canManageArticle(user, article.authorId)) {
-    throw createHttpError(403, "You do not have permission to manage this article");
-  }
+
+  assertOwnershipOrThrow(article.authorId, user.id);
 }
 
-async function recordArticleSnapshot(articleId: string, userId: string): Promise<void> {
-  const article = await findArticleDetailById(articleId);
-  if (!article) {
-    throw createHttpError(404, "Article not found");
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
   }
 
-  await createArticleVersionIfChanged(articleId, userId, article.content);
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(",")}}`;
 }
 
-function buildArticleViewKey(articleId: string, viewerSessionKey?: string): string | null {
-  if (!viewerSessionKey) {
-    return null;
-  }
-
-  return `${articleId}:${viewerSessionKey}`;
-}
-
-function pruneExpiredArticleViews(now: number): void {
-  for (const [key, timestamp] of articleViewTracker.entries()) {
-    if (now - timestamp >= VIEW_DEDUP_WINDOW_MS) {
-      articleViewTracker.delete(key);
-    }
-  }
-}
-
-function shouldIncrementArticleView(articleId: string, viewerSessionKey?: string): boolean {
-  const cacheKey = buildArticleViewKey(articleId, viewerSessionKey);
-  if (!cacheKey) {
-    return true;
-  }
-
-  const now = Date.now();
-  pruneExpiredArticleViews(now);
-  const lastViewedAt = articleViewTracker.get(cacheKey);
-  if (lastViewedAt && now - lastViewedAt < VIEW_DEDUP_WINDOW_MS) {
-    return false;
-  }
-
-  articleViewTracker.set(cacheKey, now);
-  return true;
+function isJsonEqual(a: unknown, b: unknown): boolean {
+  return stableStringify(a) === stableStringify(b);
 }
 
 export async function createArticle(
   payload: CreateArticleRequestDto | unknown,
   user: AuthenticatedUser | undefined
 ): Promise<ArticleDetailDto> {
-  ensureArticleManagerUser(user);
+  assertCapability(user, "article:create", "You do not have permission to create articles");
   const articleData = validateCreatePayload(payload);
   await ensureCategoryExists(articleData.categoryId);
 
-  const article = await createArticleRecord({
-    title: articleData.title,
-    content: articleData.content,
-    categoryId: articleData.categoryId,
-    authorId: user.id,
-    ...buildPublicationFields(articleData.status),
-  });
-
-  await createArticleVersion(article.id, user.id, article.content);
+  const article = await createArticleWithInitialVersion(
+    {
+      title: articleData.title,
+      content: articleData.content,
+      categoryId: articleData.categoryId,
+      authorId: user.id,
+      ...buildPublicationFields(articleData.status),
+    },
+    user.id
+  );
 
   return mapArticleDetail(article);
 }
@@ -293,15 +252,24 @@ export async function updateArticle(
   user: AuthenticatedUser | undefined
 ): Promise<ArticleDetailDto> {
   const normalizedArticleId = readArticleId(articleId);
-  await getOwnedArticleAccess(normalizedArticleId, user);
-  ensureArticleManagerUser(user);
+  await getManageableArticleAccess(normalizedArticleId, user);
   const updateData = validateUpdatePayload(payload);
   if (updateData.categoryId) {
     await ensureCategoryExists(updateData.categoryId);
   }
 
-  const article = await updateArticleRecord(normalizedArticleId, applyPublicationLifecycle(updateData));
-  await recordArticleSnapshot(normalizedArticleId, user.id);
+  const mutation = applyPublicationLifecycle(updateData);
+  const shouldSnapshotContent =
+    Object.prototype.hasOwnProperty.call(updateData, "content") && updateData.content !== undefined
+      ? (previousContent: Prisma.JsonValue) => !isJsonEqual(previousContent, updateData.content)
+      : () => false;
+
+  const article = await updateArticleWithVersionSnapshot({
+    articleId: normalizedArticleId,
+    data: mutation,
+    updatedById: user!.id,
+    shouldSnapshotContent,
+  });
   return mapArticleDetail(article);
 }
 
@@ -310,7 +278,8 @@ export async function deleteArticle(
   user: AuthenticatedUser | undefined
 ): Promise<DeleteArticleResponseDto> {
   const normalizedArticleId = readArticleId(articleId);
-  await getOwnedArticleAccess(normalizedArticleId, user);
+  assertCapability(user, "article:delete:own", "You do not have permission to delete articles");
+  await getManageableArticleAccess(normalizedArticleId, user);
   return deleteArticleRecord(normalizedArticleId);
 }
 
@@ -319,10 +288,8 @@ export async function publishArticle(
   user: AuthenticatedUser | undefined
 ): Promise<ArticleDetailDto> {
   const normalizedArticleId = readArticleId(articleId);
-  await getOwnedArticleAccess(normalizedArticleId, user);
-  ensureArticleManagerUser(user);
+  await getManageableArticleAccess(normalizedArticleId, user);
   const article = await updateArticleRecord(normalizedArticleId, buildPublicationFields("PUBLISHED"));
-  await recordArticleSnapshot(normalizedArticleId, user.id);
   return mapArticleDetail(article);
 }
 
@@ -331,17 +298,14 @@ export async function unpublishArticle(
   user: AuthenticatedUser | undefined
 ): Promise<ArticleDetailDto> {
   const normalizedArticleId = readArticleId(articleId);
-  await getOwnedArticleAccess(normalizedArticleId, user);
-  ensureArticleManagerUser(user);
+  await getManageableArticleAccess(normalizedArticleId, user);
   const article = await updateArticleRecord(normalizedArticleId, buildPublicationFields("DRAFT"));
-  await recordArticleSnapshot(normalizedArticleId, user.id);
   return mapArticleDetail(article);
 }
 
 export async function getArticleDetail(
   articleId: string,
-  user: AuthenticatedUser | undefined,
-  viewerSessionKey?: string
+  user: AuthenticatedUser | undefined
 ): Promise<ArticleDetailDto> {
   const normalizedArticleId = readArticleId(articleId);
   const article = await findArticleDetailById(normalizedArticleId);
@@ -353,11 +317,9 @@ export async function getArticleDetail(
     if (!user) {
       throw createHttpError(404, "Article not found");
     }
-    if (!hasStudioAccessRole(user.role) || !canManageArticle(user, article.authorId)) {
+    if (user.id !== article.authorId) {
       throw createHttpError(403, "You do not have permission to access this article");
     }
-  } else if (shouldIncrementArticleView(normalizedArticleId, viewerSessionKey)) {
-    await incrementArticleViews(normalizedArticleId);
   }
 
   return mapArticleDetail(article);
@@ -371,22 +333,19 @@ export async function getArticleList(
   let authorId: string | undefined;
 
   if (pagination.status === "DRAFT") {
-    ensureArticleManagerUser(user);
-    authorId = user.role === "AUTHOR" ? user.id : undefined;
+    assertCapability(user, "article:update:own", "You do not have permission to view draft articles");
+    authorId = user!.id;
   }
 
-  const articleQuery = {
+  const articles = await findArticles({
     status: pagination.status,
     skip: pagination.skip,
     take: pagination.limit + 1,
     ...(authorId ? { authorId } : {}),
-  };
-
-  const articles = await findArticles(articleQuery);
+  });
 
   const hasMore = articles.length > pagination.limit;
   const visibleArticles = hasMore ? articles.slice(0, pagination.limit) : articles;
-
   return {
     items: visibleArticles.map((article) => mapArticleListItem(article)),
     pagination: {
@@ -396,4 +355,28 @@ export async function getArticleList(
       nextSkip: hasMore ? pagination.skip + pagination.limit : null,
     },
   };
+}
+
+function mapArticleVersionItem(version: ArticleVersionRecord): ArticleVersionItemDto {
+  return {
+    id: version.id,
+    articleId: version.articleId,
+    updatedAt: version.updatedAt,
+    updatedBy: {
+      id: version.updatedBy.id,
+      name: version.updatedBy.name,
+      role: version.updatedBy.role,
+    },
+    contentSnapshot: version.contentSnapshot,
+  };
+}
+
+export async function getArticleVersions(
+  articleId: string,
+  user: AuthenticatedUser | undefined
+): Promise<ArticleVersionListResponseDto> {
+  const normalizedArticleId = readArticleId(articleId);
+  await getManageableArticleAccess(normalizedArticleId, user);
+  const versions = await findArticleVersionsByArticleId(normalizedArticleId);
+  return { items: versions.map(mapArticleVersionItem) };
 }

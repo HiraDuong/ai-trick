@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { getCurrentUserResponse, getEditorAccessResponse, loginUser, registerUser } from "../services/auth.service";
 import type { ApiSuccessResponse } from "../types/api.types";
 import type {
+  AuthenticatedUser,
   AuthResponseDto,
   CurrentUserResponseDto,
   EditorAccessResponseDto,
@@ -11,6 +12,10 @@ import type {
   RegisterRequestDto,
 } from "../types/auth.types";
 import { createHttpError } from "../utils/error.utils";
+
+function readRequestUser(request: Request): AuthenticatedUser | undefined {
+  return (request as Request & { user?: AuthenticatedUser }).user;
+}
 
 export async function register(
   request: Request<Record<string, never>, ApiSuccessResponse<AuthResponseDto>, RegisterRequestDto>,
@@ -44,11 +49,12 @@ export async function getCurrentUser(
   next: NextFunction
 ): Promise<void> {
   try {
-    if (!request.user) {
+    const user = readRequestUser(request);
+    if (!user) {
       throw createHttpError(401, "Authenticated user is required");
     }
 
-    const result = await getCurrentUserResponse(request.user.id);
+    const result = await getCurrentUserResponse(user.id);
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

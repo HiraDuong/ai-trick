@@ -75,3 +75,21 @@ export interface DeleteArticleResponseDto {
   id: string;
   title: string;
 }
+
+export interface ArticleVersionActorDto {
+  id: string;
+  name: string;
+  role: string;
+}
+
+export interface ArticleVersionItemDto {
+  id: string;
+  articleId: string;
+  updatedAt: Date;
+  updatedBy: ArticleVersionActorDto;
+  contentSnapshot: Prisma.JsonValue;
+}
+
+export interface ArticleVersionListResponseDto {
+  items: ArticleVersionItemDto[];
+}

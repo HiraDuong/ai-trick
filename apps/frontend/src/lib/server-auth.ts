@@ -70,6 +70,10 @@ export async function requireStudioUser(redirectTo: string): Promise<AuthUserDto
   return user;
 }
 
+export async function requireArticleContributorUser(redirectTo: string): Promise<AuthUserDto> {
+  return requireStudioUser(redirectTo);
+}
+
 export async function redirectAuthenticatedUser(redirectTo: string): Promise<void> {
   const user = await fetchServerCurrentUser();
   if (user) {
