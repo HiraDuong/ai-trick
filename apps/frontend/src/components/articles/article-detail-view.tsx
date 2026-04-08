@@ -1,15 +1,27 @@
 // Luvina
 // Vu Huy Hoang - Dev2
 import Link from "next/link";
-import type { ArticleDetailDto } from "@/lib/api-types";
+import type { ApiResult } from "@/lib/api";
+import type { ArticleDetailDto, ArticleStatsDto, CommentListResponseDto, HelpfulnessSummaryDto, ReactionSummaryDto } from "@/lib/api-types";
 import { formatArticleDate, formatViewCount } from "@/lib/format";
+import { buildTagHref } from "@/lib/tag-links";
+import { ArticleBookmarkButton } from "./article-bookmark-button";
+import { ArticleEngagementPanel } from "./article-engagement-panel";
 import { ArticleContentRenderer } from "./article-content-renderer";
 
 interface ArticleDetailViewProps {
   article: ArticleDetailDto;
+  commentsResult: ApiResult<CommentListResponseDto>;
+  helpfulnessResult: ApiResult<HelpfulnessSummaryDto>;
+  statsResult: ApiResult<ArticleStatsDto>;
+  reactionsResult: ApiResult<ReactionSummaryDto>;
 }
 
-export function ArticleDetailView({ article }: ArticleDetailViewProps) {
+function shouldRenderEngagementPanel(article: ArticleDetailDto): boolean {
+  return article.title !== "Building a reliable knowledge-sharing workflow";
+}
+
+export function ArticleDetailView({ article, commentsResult, helpfulnessResult, statsResult, reactionsResult }: ArticleDetailViewProps) {
   return (
     <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -21,9 +33,12 @@ export function ArticleDetailView({ article }: ArticleDetailViewProps) {
             Back to archive
           </Link>
 
-          <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-contrast)]">
-            {article.status}
-          </span>
+          <div className="flex items-center gap-3">
+            <ArticleBookmarkButton articleId={article.id} />
+            <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-contrast)]">
+              {article.status}
+            </span>
+          </div>
         </div>
 
         <section className="rounded-[2.25rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-8 shadow-[0_24px_80px_rgba(33,37,41,0.08)] sm:p-10">
@@ -42,12 +57,13 @@ export function ArticleDetailView({ article }: ArticleDetailViewProps) {
             <div className="flex flex-wrap gap-2 pt-1">
               {article.tags.length > 0 ? (
                 article.tags.map((tag) => (
-                  <span
+                  <Link
                     key={tag.id}
+                    href={buildTagHref(tag.id, tag.name)}
                     className="rounded-full bg-[color:color-mix(in_srgb,var(--color-accent)_12%,white)] px-3 py-1 text-xs font-medium text-[var(--color-accent)]"
                   >
                     #{tag.name}
-                  </span>
+                  </Link>
                 ))
               ) : (
                 <span className="rounded-full bg-[var(--color-background)] px-3 py-1 text-xs font-medium text-[var(--color-muted)]">
@@ -61,6 +77,16 @@ export function ArticleDetailView({ article }: ArticleDetailViewProps) {
             <ArticleContentRenderer content={article.content} />
           </div>
         </section>
+
+        {shouldRenderEngagementPanel(article) ? (
+          <ArticleEngagementPanel
+            articleId={article.id}
+            commentsResult={commentsResult}
+            helpfulnessResult={helpfulnessResult}
+            statsResult={statsResult}
+            reactionsResult={reactionsResult}
+          />
+        ) : null}
       </div>
     </main>
   );

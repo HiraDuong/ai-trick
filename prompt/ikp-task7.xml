@@ -1,0 +1,39 @@
+<task id="task-7-comments" phase="phase-3" name="Comments System">
+  <objective>
+    Implement article comment system with basic threading support.
+  </objective>
+
+  <dependencies>
+    <depends-on>task-4-article-core</depends-on>
+  </dependencies>
+
+  <scope>
+    <item>Create comment</item>
+    <item>List comments by article</item>
+    <item>Support parent-child threading (parentId)</item>
+  </scope>
+
+  <requirements>
+    <requirement>Authenticated users only can create comments</requirement>
+    <requirement>Pagination for comment list</requirement>
+    <requirement>Order comments by creation time</requirement>
+    <requirement>Return nested or flat structure (choose one consistently)</requirement>
+  </requirements>
+
+  <rules>
+    <rule>Do not implement deep nesting optimization yet</rule>
+    <rule>Do not include helpfulness logic in this task</rule>
+  </rules>
+
+  <outputs>
+    <file>comment.repository.js</file>
+    <file>comment.service.js</file>
+    <file>comment.controller.js</file>
+    <file>comment.routes.js</file>
+  </outputs>
+
+  <acceptance>
+    <criteria>Comments can be created and retrieved per article</criteria>
+    <criteria>Threading works via parentId</criteria>
+  </acceptance>
+</task>

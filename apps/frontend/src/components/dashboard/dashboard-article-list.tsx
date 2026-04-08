@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { DashboardArticleSummaryDto } from "@/lib/api-types";
 import { formatArticleDate, formatViewCount } from "@/lib/format";
+import { buildTagHref } from "@/lib/tag-links";
 
 interface DashboardArticleListProps {
   eyebrow: string;
@@ -59,7 +60,7 @@ export function DashboardArticleList({
                       article.tags.map((tag) => (
                         <Link
                           key={tag.id}
-                          href={`/search?q=${encodeURIComponent(tag.name)}`}
+                          href={buildTagHref(tag.id, tag.name)}
                           className="rounded-full bg-[color:color-mix(in_srgb,var(--color-accent)_12%,white)] px-3 py-1 text-xs font-medium text-[var(--color-accent)] transition-colors duration-200 hover:bg-[color:color-mix(in_srgb,var(--color-accent)_18%,white)]"
                         >
                           #{tag.name}

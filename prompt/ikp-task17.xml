@@ -1,0 +1,31 @@
+<task id="16-enhanced-search">
+
+  <objective>
+    Provide full-text search with ranking and highlighting.
+  </objective>
+
+  <backend>
+    <api>
+      <endpoint>GET /search?q=keyword</endpoint>
+      <response>
+        {
+          "results": [
+            {
+              "id": "string",
+              "title": "matched text",
+              "excerpt": "highlighted text"
+            }
+          ]
+        }
+      </response>
+    </api>
+  </backend>
+
+  <frontend>
+    <ui>
+      <component>Search Bar</component>
+      <component>Result List</component>
+    </ui>
+  </frontend>
+
+</task>

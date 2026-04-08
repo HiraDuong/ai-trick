@@ -1,0 +1,691 @@
+<ai_backend_test_preparation>
+
+  <instruction>
+    Improve and execute backend API test coverage only.
+    Do not perform frontend or UI validation.
+    Validate all outcomes through API responses and database verification.
+  </instruction>
+
+  <scope>
+    Include the following backend modules only:
+    - Articles / Draft lifecycle
+    - Version history / Restore / Deduplication
+    - Notifications
+    - View count / Stats
+    - Comments
+    - Reactions
+    - Helpfulness
+  </scope>
+
+  <test_case_requirements>
+    - Cover positive, negative, boundary, empty, security, and business-rule scenarios.
+    - Cover create, read, update, and delete paths where applicable.
+    - Cover ownership, authorization, validation, deduplication, and summary aggregation rules.
+    - Keep test cases reproducible and independent.
+  </test_case_requirements>
+
+  <backend_test_cases>
+
+    <case>
+      <case_id>BE-01</case_id>
+      <module>Articles</module>
+      <type>Positive</type>
+      <description>Create a new draft article</description>
+      <preconditions>Authenticated author exists and target category exists.</preconditions>
+      <test_data>{"title":"Task 25 draft article","categoryId":"ut_category_child","content":["Paragraph one","Paragraph two"],"status":"DRAFT"}</test_data>
+      <steps>POST /api/articles with author bearer token.</steps>
+      <expected_result>201 Created, draft article returned, and one initial version snapshot persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-02</case_id>
+      <module>Articles</module>
+      <type>Negative</type>
+      <description>Create article with missing required fields</description>
+      <preconditions>Authenticated author exists.</preconditions>
+      <test_data>{"categoryId":"ut_category_child","status":"DRAFT"}</test_data>
+      <steps>POST /api/articles without title and content.</steps>
+      <expected_result>400 Bad Request and no article persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-03</case_id>
+      <module>Articles</module>
+      <type>Boundary</type>
+      <description>Create article with maximum allowed title length</description>
+      <preconditions>Authenticated author exists.</preconditions>
+      <test_data>{"title":"200-char string","categoryId":"ut_category_child","content":["Boundary title article body"],"status":"DRAFT"}</test_data>
+      <steps>POST /api/articles with title length exactly 200.</steps>
+      <expected_result>201 Created because the title is within the accepted limit.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-04</case_id>
+      <module>Articles</module>
+      <type>Negative</type>
+      <description>Create article with invalid data types</description>
+      <preconditions>Authenticated author exists.</preconditions>
+      <test_data>{"title":12345,"categoryId":"ut_category_child","content":42,"status":"DRAFT"}</test_data>
+      <steps>POST /api/articles with numeric title and numeric content.</steps>
+      <expected_result>400 validation error and no article persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-05</case_id>
+      <module>Articles</module>
+      <type>Positive</type>
+      <description>Update draft article with changed content</description>
+      <preconditions>Owned draft article exists with one saved version.</preconditions>
+      <test_data>{"title":"Autosave draft updated","content":["Updated body paragraph"]}</test_data>
+      <steps>PATCH /api/articles/:articleId with changed title and content.</steps>
+      <expected_result>200 OK, article updated, and one additional version snapshot created.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-06</case_id>
+      <module>Versioning</module>
+      <type>Edge</type>
+      <description>Update article with identical content</description>
+      <preconditions>Owned draft article exists and latest saved version matches the current article content.</preconditions>
+      <test_data>{"title":"Same content draft","categoryId":"ut_category_child","content":["Same content body"]}</test_data>
+      <steps>PATCH /api/articles/:articleId with unchanged content.</steps>
+      <expected_result>200 OK and no new version snapshot created.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-07</case_id>
+      <module>Articles</module>
+      <type>Empty</type>
+      <description>Update article with empty content</description>
+      <preconditions>Owned draft article exists.</preconditions>
+      <test_data>{"content":[]}</test_data>
+      <steps>PATCH /api/articles/:articleId with empty content array.</steps>
+      <expected_result>400 validation error, article content unchanged, and no extra version created.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-08</case_id>
+      <module>Notifications</module>
+      <type>Positive</type>
+      <description>Retrieve notifications with latest-20 limit</description>
+      <preconditions>Authenticated author exists with more than 20 notifications.</preconditions>
+      <test_data>{"userId":"ut_author_owner","notificationCount":25}</test_data>
+      <steps>GET /api/notifications with valid bearer token.</steps>
+      <expected_result>200 OK and only the latest 20 notifications returned.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-09</case_id>
+      <module>Notifications</module>
+      <type>Empty</type>
+      <description>Retrieve notifications when none exist</description>
+      <preconditions>Authenticated author exists with zero notifications.</preconditions>
+      <test_data>{"userId":"ut_author_owner","notificationCount":0}</test_data>
+      <steps>GET /api/notifications with valid bearer token.</steps>
+      <expected_result>200 OK and empty array returned.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-10</case_id>
+      <module>Stats</module>
+      <type>Positive</type>
+      <description>Increment published article view count once per session</description>
+      <preconditions>Published article exists and two reads use the same viewer session key.</preconditions>
+      <test_data>{"articleId":"ut_published_view_article","cookie":"ut_session=session-1","requestCount":2}</test_data>
+      <steps>GET /api/articles/:articleId twice with the same cookie header.</steps>
+      <expected_result>Both requests succeed and view count increments only once.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-11</case_id>
+      <module>Security</module>
+      <type>Security</type>
+      <description>Access auth-required endpoint without authentication</description>
+      <preconditions>Notifications endpoint requires bearer authentication.</preconditions>
+      <test_data>{"endpoint":"/api/notifications","token":null}</test_data>
+      <steps>GET /api/notifications without Authorization header.</steps>
+      <expected_result>401 Unauthorized.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-12</case_id>
+      <module>Comments</module>
+      <type>Negative</type>
+      <description>Delete comment by non-owner</description>
+      <preconditions>Published article and owner comment exist; acting user is different from comment owner.</preconditions>
+      <test_data>{"commentId":"ut_comment_owned","actingUser":"author.peer@example.com"}</test_data>
+      <steps>DELETE /api/comments/:commentId with non-owner bearer token.</steps>
+      <expected_result>403 Forbidden and comment remains undeleted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-13</case_id>
+      <module>Comments</module>
+      <type>Empty</type>
+      <description>Create comment with empty content</description>
+      <preconditions>Published article exists and acting user is authenticated.</preconditions>
+      <test_data>{"content":"   "}</test_data>
+      <steps>POST /api/articles/:articleId/comments with whitespace-only content.</steps>
+      <expected_result>400 validation error and no comment persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-14</case_id>
+      <module>Reactions</module>
+      <type>Positive</type>
+      <description>Add first reaction to published article</description>
+      <preconditions>Published article exists and acting user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_reaction_article","type":"LIKE"}</test_data>
+      <steps>POST /api/reactions with articleId and type LIKE.</steps>
+      <expected_result>200 OK, reaction persisted, and summary shows LIKE count 1.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-15</case_id>
+      <module>Articles</module>
+      <type>Security</type>
+      <description>Update draft article by non-owner author</description>
+      <preconditions>Draft article belongs to author owner and acting author is not the owner.</preconditions>
+      <test_data>{"title":"Illegal peer update"}</test_data>
+      <steps>PATCH /api/articles/:articleId with another author's bearer token.</steps>
+      <expected_result>403 Forbidden and article remains unchanged.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-16</case_id>
+      <module>Articles</module>
+      <type>Positive</type>
+      <description>Delete own draft article</description>
+      <preconditions>Owned draft article exists with saved versions.</preconditions>
+      <test_data>{"articleId":"ut_delete_draft_article"}</test_data>
+      <steps>DELETE /api/articles/:articleId with owner bearer token.</steps>
+      <expected_result>200 OK, article deleted, and dependent versions removed.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-17</case_id>
+      <module>Articles</module>
+      <type>Positive</type>
+      <description>List draft articles returns only current author's drafts</description>
+      <preconditions>Two authors each have at least one draft article.</preconditions>
+      <test_data>{"status":"DRAFT","skip":0,"limit":50}</test_data>
+      <steps>GET /api/articles?status=DRAFT&amp;skip=0&amp;limit=50 with owner bearer token.</steps>
+      <expected_result>200 OK and response contains only drafts authored by the requester.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-18</case_id>
+      <module>Articles</module>
+      <type>Security</type>
+      <description>Read another author's draft article detail</description>
+      <preconditions>Draft article exists and acting author does not own it.</preconditions>
+      <test_data>{"articleId":"ut_hidden_draft"}</test_data>
+      <steps>GET /api/articles/:articleId with non-owner author token.</steps>
+      <expected_result>403 Forbidden.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-19</case_id>
+      <module>Versioning</module>
+      <type>Positive</type>
+      <description>Get owned article versions</description>
+      <preconditions>Owned draft article exists with multiple saved versions.</preconditions>
+      <test_data>{"articleId":"ut_versions_article"}</test_data>
+      <steps>GET /api/articles/:articleId/versions with owner bearer token.</steps>
+      <expected_result>200 OK and response contains all saved versions ordered newest first.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-20</case_id>
+      <module>Versioning</module>
+      <type>Positive</type>
+      <description>Restore previous article version</description>
+      <preconditions>Owned draft article exists, target version exists, and target content differs from current content.</preconditions>
+      <test_data>{"articleId":"ut_restore_article","versionId":"ut_restore_v1"}</test_data>
+      <steps>POST /api/articles/:articleId/restore with valid versionId.</steps>
+      <expected_result>200 OK and article content restored to the selected version without duplicate snapshot creation.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-21</case_id>
+      <module>Versioning</module>
+      <type>Negative</type>
+      <description>Restore article with missing version id</description>
+      <preconditions>Owned draft article exists but the provided versionId does not belong to the article.</preconditions>
+      <test_data>{"articleId":"ut_restore_article_missing","versionId":"ut_missing_version"}</test_data>
+      <steps>POST /api/articles/:articleId/restore with invalid versionId.</steps>
+      <expected_result>404 Not Found and article content remains unchanged.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-22</case_id>
+      <module>Notifications</module>
+      <type>Positive</type>
+      <description>Mark own notification as read</description>
+      <preconditions>Authenticated user has an unread notification.</preconditions>
+      <test_data>{"notificationId":"ut_notification_read_owner"}</test_data>
+      <steps>PATCH /api/notifications/:notificationId/read with owner bearer token.</steps>
+      <expected_result>200 OK and notification isRead becomes true in database.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-23</case_id>
+      <module>Notifications</module>
+      <type>Security</type>
+      <description>Mark another user's notification as read</description>
+      <preconditions>Unread notification exists for a different user.</preconditions>
+      <test_data>{"notificationId":"ut_notification_read_other"}</test_data>
+      <steps>PATCH /api/notifications/:notificationId/read with unauthorized bearer token.</steps>
+      <expected_result>404 Not Found and target notification remains unread.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-24</case_id>
+      <module>Stats</module>
+      <type>Positive</type>
+      <description>Read article stats summary</description>
+      <preconditions>Published article exists with seeded views, comments, and helpfulness ratings.</preconditions>
+      <test_data>{"articleId":"ut_stats_article"}</test_data>
+      <steps>GET /api/articles/:articleId/stats.</steps>
+      <expected_result>200 OK and response counts match database aggregates, excluding deleted comments.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-25</case_id>
+      <module>Comments</module>
+      <type>Positive</type>
+      <description>Create top-level comment and notify article author</description>
+      <preconditions>Published article exists and acting user is not the article author.</preconditions>
+      <test_data>{"content":"Great write-up on the release checklist."}</test_data>
+      <steps>POST /api/articles/:articleId/comments with valid content.</steps>
+      <expected_result>201 Created, comment persisted, and article author receives one notification.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-26</case_id>
+      <module>Comments</module>
+      <type>Positive</type>
+      <description>Read article comments with one-level replies</description>
+      <preconditions>Published article exists with one top-level comment and one reply.</preconditions>
+      <test_data>{"articleId":"ut_comment_thread_article","skip":0,"limit":20}</test_data>
+      <steps>GET /api/articles/:articleId/comments?skip=0&amp;limit=20.</steps>
+      <expected_result>200 OK and response nests the reply under its parent top-level comment.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-27</case_id>
+      <module>Comments</module>
+      <type>Negative</type>
+      <description>Reply to deleted parent comment</description>
+      <preconditions>Published article exists and parent comment is soft-deleted.</preconditions>
+      <test_data>{"content":"Trying to reply","parentId":"ut_deleted_parent_comment"}</test_data>
+      <steps>POST /api/articles/:articleId/comments with deleted parentId.</steps>
+      <expected_result>400 Bad Request and no reply comment persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-28</case_id>
+      <module>Reactions</module>
+      <type>Edge</type>
+      <description>Toggle same reaction twice removes it</description>
+      <preconditions>Published article exists and acting user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_toggle_reaction_article","type":"LIKE","requestCount":2}</test_data>
+      <steps>POST /api/reactions twice with the same articleId and type LIKE.</steps>
+      <expected_result>Second request removes the user's reaction and counts return to zero.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-29</case_id>
+      <module>Helpfulness</module>
+      <type>Positive</type>
+      <description>Upsert helpfulness vote</description>
+      <preconditions>Published article exists and acting user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_helpfulness_article","firstValue":"HELPFUL","secondValue":"NOT_HELPFUL"}</test_data>
+      <steps>POST /api/articles/:articleId/helpfulness twice, first with HELPFUL then with NOT_HELPFUL.</steps>
+      <expected_result>Only one rating row remains and final summary reflects NOT_HELPFUL for the acting user.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-30</case_id>
+      <module>Helpfulness</module>
+      <type>Negative</type>
+      <description>Reject invalid helpfulness value</description>
+      <preconditions>Published article exists and acting user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_invalid_helpfulness_article","value":"MAYBE"}</test_data>
+      <steps>POST /api/articles/:articleId/helpfulness with invalid value.</steps>
+      <expected_result>400 Bad Request and no helpfulness rating row persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-31</case_id>
+      <module>User</module>
+      <type>Positive</type>
+      <description>Register a new author account</description>
+      <preconditions>Email is not already registered.</preconditions>
+      <test_data>{"name":"New Author","email":"new.author@example.com","password":"Passw0rd!"}</test_data>
+      <steps>POST /api/auth/register with valid payload.</steps>
+      <expected_result>201 Created, user returned with AUTHOR role, and user record persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-32</case_id>
+      <module>User</module>
+      <type>Negative</type>
+      <description>Login with invalid password</description>
+      <preconditions>User account exists.</preconditions>
+      <test_data>{"email":"author.owner@example.com","password":"WrongPass123"}</test_data>
+      <steps>POST /api/auth/login with incorrect password.</steps>
+      <expected_result>401 Unauthorized and no new data persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-33</case_id>
+      <module>User</module>
+      <type>Positive</type>
+      <description>Get current authenticated user profile</description>
+      <preconditions>Valid bearer token exists for an authenticated user.</preconditions>
+      <test_data>{"tokenOwner":"author.owner@example.com"}</test_data>
+      <steps>GET /api/auth/me with valid bearer token.</steps>
+      <expected_result>200 OK and response contains the authenticated user's profile.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-34</case_id>
+      <module>Articles</module>
+      <type>Positive</type>
+      <description>List published articles with pagination metadata</description>
+      <preconditions>At least 12 published articles exist.</preconditions>
+      <test_data>{"status":"PUBLISHED","skip":0,"limit":10}</test_data>
+      <steps>GET /api/articles?status=PUBLISHED&amp;skip=0&amp;limit=10.</steps>
+      <expected_result>200 OK, 10 items returned, hasMore=true, nextSkip=10, and items ordered by published date descending.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-35</case_id>
+      <module>Articles</module>
+      <type>Boundary</type>
+      <description>Reject invalid article list pagination limit</description>
+      <preconditions>No special setup beyond reachable API.</preconditions>
+      <test_data>{"status":"PUBLISHED","skip":0,"limit":0}</test_data>
+      <steps>GET /api/articles?status=PUBLISHED&amp;skip=0&amp;limit=0.</steps>
+      <expected_result>400 Bad Request because limit must be between 1 and 50.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-36</case_id>
+      <module>Comments</module>
+      <type>Positive</type>
+      <description>Read article comments on the second page</description>
+      <preconditions>Published article exists with at least 25 top-level comments.</preconditions>
+      <test_data>{"articleId":"ut_comment_page_article","skip":10,"limit":10}</test_data>
+      <steps>GET /api/articles/:articleId/comments?skip=10&amp;limit=10.</steps>
+      <expected_result>200 OK, 10 comments returned, hasMore=true, and nextSkip=20.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-37</case_id>
+      <module>Comments</module>
+      <type>Boundary</type>
+      <description>Reject invalid comment list pagination limit</description>
+      <preconditions>Published article exists.</preconditions>
+      <test_data>{"articleId":"ut_comment_invalid_page_article","skip":0,"limit":51}</test_data>
+      <steps>GET /api/articles/:articleId/comments?skip=0&amp;limit=51.</steps>
+      <expected_result>400 Bad Request because limit must be between 1 and 50.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-38</case_id>
+      <module>Bookmark</module>
+      <type>Positive</type>
+      <description>Create bookmark and list it for the current user</description>
+      <preconditions>Published article exists and user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_bookmark_article"}</test_data>
+      <steps>POST /api/bookmarks then GET /api/bookmarks with the same bearer token.</steps>
+      <expected_result>Bookmark is created and appears in the authenticated user's bookmark list.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-39</case_id>
+      <module>Bookmark</module>
+      <type>Positive</type>
+      <description>Delete existing bookmark</description>
+      <preconditions>User already has a bookmark for the target published article.</preconditions>
+      <test_data>{"articleId":"ut_bookmark_delete_article"}</test_data>
+      <steps>DELETE /api/bookmarks/:articleId with authenticated user's bearer token.</steps>
+      <expected_result>200 OK, bookmarked=false returned, and bookmark row removed from database.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-40</case_id>
+      <module>Bookmark</module>
+      <type>Negative</type>
+      <description>Reject bookmark creation for inaccessible draft article</description>
+      <preconditions>Draft article exists but is not published.</preconditions>
+      <test_data>{"articleId":"ut_bookmark_draft_article"}</test_data>
+      <steps>POST /api/bookmarks with draft articleId.</steps>
+      <expected_result>404 Not Found and no bookmark row persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-41</case_id>
+      <module>Category</module>
+      <type>Positive</type>
+      <description>Retrieve hierarchical category tree</description>
+      <preconditions>Categories exist with parent-child relationships.</preconditions>
+      <test_data>{}</test_data>
+      <steps>GET /api/categories/tree.</steps>
+      <expected_result>200 OK, nested category structure returned, and total matches database category count.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-42</case_id>
+      <module>Tag</module>
+      <type>Positive</type>
+      <description>Filter published articles by tag with pagination</description>
+      <preconditions>At least two published articles are associated with the same tag.</preconditions>
+      <test_data>{"tagId":"ut_search_tag","skip":0,"limit":1}</test_data>
+      <steps>GET /api/search/articles?tagId=:tagId&amp;skip=0&amp;limit=1.</steps>
+      <expected_result>200 OK, one tagged article returned, total reflects all matches, and tag metadata is included.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-43</case_id>
+      <module>Tag</module>
+      <type>Negative</type>
+      <description>Reject invalid search pagination input</description>
+      <preconditions>Search endpoint is reachable.</preconditions>
+      <test_data>{"q":"knowledge","skip":-1,"limit":10}</test_data>
+      <steps>GET /api/search/articles?q=knowledge&amp;skip=-1&amp;limit=10.</steps>
+      <expected_result>400 Bad Request because skip must be a non-negative integer.</expected_result>
+    </case>
+    <case>
+      <case_id>BE-44</case_id>
+      <module>Search</module>
+      <type>Positive</type>
+      <description>Search published articles by keyword with pagination</description>
+      <preconditions>Published and draft articles exist with overlapping searchable content.</preconditions>
+      <test_data>{"q":"playbook","skip":0,"limit":1}</test_data>
+      <steps>GET /api/search/articles?q=playbook&amp;skip=0&amp;limit=1.</steps>
+      <expected_result>200 OK, only published keyword matches are returned, and pagination reflects the full match count.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-45</case_id>
+      <module>Versioning</module>
+      <type>Positive</type>
+      <description>Retrieve version history of an owned article</description>
+      <preconditions>Authenticated author owns an article with multiple persisted versions.</preconditions>
+      <test_data>{"articleId":"ut_version_history_article"}</test_data>
+      <steps>GET /api/articles/:articleId/versions with the owning author's bearer token.</steps>
+      <expected_result>200 OK and versions are returned in descending updatedAt order.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-46</case_id>
+      <module>Helpfulness</module>
+      <type>Positive</type>
+      <description>Create an initial helpfulness vote</description>
+      <preconditions>Published article exists and authenticated user has not voted yet.</preconditions>
+      <test_data>{"articleId":"ut_helpfulness_vote_article","value":"HELPFUL"}</test_data>
+      <steps>POST /api/articles/:articleId/helpfulness with value HELPFUL.</steps>
+      <expected_result>200 OK, one helpfulness row is saved, and the returned summary reflects HELPFUL for the acting user.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-47</case_id>
+      <module>Helpfulness</module>
+      <type>Boundary</type>
+      <description>Change an existing helpfulness vote</description>
+      <preconditions>Published article exists and the authenticated user already has one helpfulness vote.</preconditions>
+      <test_data>{"articleId":"ut_helpfulness_update_article","value":"NOT_HELPFUL"}</test_data>
+      <steps>POST /api/articles/:articleId/helpfulness after an existing HELPFUL vote for the same user.</steps>
+      <expected_result>200 OK, the existing row is updated in place, and the returned summary reflects NOT_HELPFUL.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-48</case_id>
+      <module>Reactions</module>
+      <type>Boundary</type>
+      <description>Switch reaction type for the same article</description>
+      <preconditions>Published article exists and the authenticated user already reacted with LIKE.</preconditions>
+      <test_data>{"articleId":"ut_reaction_switch_article","type":"LOVE"}</test_data>
+      <steps>POST /api/reactions with the same articleId and a new type LOVE.</steps>
+      <expected_result>200 OK, the existing reaction is updated from LIKE to LOVE and the summary counts change accordingly.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-49</case_id>
+      <module>Articles</module>
+      <type>Boundary</type>
+      <description>Create article with large JSON content payload</description>
+      <preconditions>Authenticated author exists and the category is valid.</preconditions>
+      <test_data>{"title":"Large Article","categoryId":"ut_category_child","status":"DRAFT","content":["large repeated text blocks..."]}</test_data>
+      <steps>POST /api/articles with a large content array payload.</steps>
+      <expected_result>201 Created, article content is persisted without truncation, and one initial version snapshot is created.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-50</case_id>
+      <module>Comments</module>
+      <type>Negative</type>
+      <description>Create comment with invalid articleId</description>
+      <preconditions>Authenticated user exists but target article does not exist.</preconditions>
+      <test_data>{"articleId":"invalid_id","content":"Test"}</test_data>
+      <steps>POST /api/articles/:articleId/comments with a non-existent articleId.</steps>
+      <expected_result>404 Not Found and no comment row is persisted.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-55</case_id>
+      <module>Reactions</module>
+      <type>Positive</type>
+      <description>Create reaction and verify DB state</description>
+      <preconditions>User and article exist, and there is no prior reaction for the same articleId + userId pair.</preconditions>
+      <test_data>{"articleId":"ut_reaction_db_article","type":"LIKE"}</test_data>
+      <steps>POST /api/reactions and verify API response, before/after DB state, and summary side effect.</steps>
+      <expected_result>1 record is inserted in the Reaction table, the articleId + userId combination exists exactly once, and the API summary reflects LIKE count 1.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-56</case_id>
+      <module>Bookmark</module>
+      <type>Positive</type>
+      <description>Bookmark creation persists in DB</description>
+      <preconditions>User and published article exist, and the user has not bookmarked the article yet.</preconditions>
+      <test_data>{"articleId":"ut_bookmark_db_article"}</test_data>
+      <steps>POST /api/bookmarks, then GET /api/bookmarks, and verify before/after DB state.</steps>
+      <expected_result>Bookmark record exists in DB with the correct userId and articleId, and the bookmark appears in the authenticated user's bookmark list.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-57</case_id>
+      <module>Comments</module>
+      <type>Positive</type>
+      <description>Create comment and verify persistence</description>
+      <preconditions>Published article exists and the acting user is authenticated.</preconditions>
+      <test_data>{"articleId":"ut_comment_db_article","content":"Test comment persistence"}</test_data>
+      <steps>POST /api/articles/:articleId/comments and verify API response, before/after DB state, and notification side effect.</steps>
+      <expected_result>Comment is stored with the correct articleId and userId, and the article author receives one notification as a side effect.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-58</case_id>
+      <module>Articles</module>
+      <type>Negative</type>
+      <description>Reject article list with non-numeric pagination params</description>
+      <preconditions>Published articles exist and the endpoint is reachable.</preconditions>
+      <test_data>{"status":"PUBLISHED","skip":"abc","limit":"ten"}</test_data>
+      <steps>GET /api/articles?status=PUBLISHED&amp;skip=abc&amp;limit=ten.</steps>
+      <expected_result>400 Bad Request because skip and limit must be valid integers.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-59</case_id>
+      <module>Comments</module>
+      <type>Empty</type>
+      <description>Reject comment list with empty pagination params</description>
+      <preconditions>Published article exists and the comments endpoint is reachable.</preconditions>
+      <test_data>{"articleId":"ut_comment_empty_pagination_article","skip":"","limit":""}</test_data>
+      <steps>GET /api/articles/:articleId/comments?skip=&amp;limit=.</steps>
+      <expected_result>400 Bad Request because empty skip and limit query parameters are invalid.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-60</case_id>
+      <module>Search</module>
+      <type>Edge</type>
+      <description>Search uses default pagination when params are omitted</description>
+      <preconditions>Published search matches exist and the search endpoint is reachable.</preconditions>
+      <test_data>{"q":"playbook"}</test_data>
+      <steps>GET /api/search/articles?q=playbook without skip and limit query params.</steps>
+      <expected_result>200 OK and default pagination values skip=0 and limit=10 are applied.</expected_result>
+    </case>
+
+    <case>
+      <case_id>BE-61</case_id>
+      <module>Articles</module>
+      <type>Boundary</type>
+      <description>Article list returns empty page when skip exceeds total records</description>
+      <preconditions>Published articles exist but requested skip is larger than the result set.</preconditions>
+      <test_data>{"status":"PUBLISHED","skip":50,"limit":10,"seededTotal":3}</test_data>
+      <steps>GET /api/articles?status=PUBLISHED&amp;skip=50&amp;limit=10.</steps>
+      <expected_result>200 OK with an empty items array and no next page metadata when skip exceeds the total record count.</expected_result>
+    </case>
+  </backend_test_cases>
+
+  <test_data_requirements>
+    - Users with AUTHOR and VIEWER roles
+    - Categories for article creation
+    - Draft and published articles
+    - Article versions with distinct and duplicate snapshots
+    - Notifications owned by different users
+    - Comments with top-level, reply, and deleted states
+    - Published article collections for pagination cases, empty-page behavior, and default-pagination checks
+    - Reaction and helpfulness rows for aggregation checks
+    - Bookmarks owned by authenticated users
+    - Tags linked to published articles for search filtering
+    - Before/after mutation probes for reaction, bookmark, and comment persistence checks
+  </test_data_requirements>
+
+  <coverage_summary>
+    - Articles: create, read, update, delete, ownership, validation
+    - Versioning: list, restore, deduplication
+    - Notifications: list, limit, mark read, authorization
+    - Stats: view deduplication and aggregate counts
+    - Comments: create, read, delete protection, deleted-parent rule, persistence verification, and notification side effects
+    - Reactions: create, toggle-off rule, and DB persistence verification
+    - Helpfulness: upsert and invalid-value validation
+    - User/Auth: register, login failure, current-user profile
+    - Bookmarks: create, delete, list behavior, and DB persistence verification
+    - Category tree: nested structure and total count
+    - Search: keyword filter, tag filter, pagination validation, and omitted-parameter default handling
+  </coverage_summary>
+
+  <constraints>
+    - Backend only
+    - No frontend or UI validation
+    - API responses and database state must both be verified
+    - All test cases must be executable and reproducible
+  </constraints>
+
+</ai_backend_test_preparation>

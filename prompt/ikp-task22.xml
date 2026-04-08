@@ -1,0 +1,135 @@
+<task id="22-comment-system">
+
+  <objective>
+    Provide a complete comment system including create, list, reply, and delete.
+  </objective>
+
+  <!-- ================= DB ================= -->
+  <database>
+    <schema>
+      Comment (
+        id TEXT PRIMARY KEY,
+        content TEXT,
+        articleId TEXT,
+        userId TEXT,
+        parentId TEXT NULL,
+        createdAt TIMESTAMP,
+        updatedAt TIMESTAMP,
+        deletedAt TIMESTAMP NULL
+      )
+    </schema>
+  </database>
+
+  <!-- ================= API ================= -->
+  <backend>
+
+    <!-- CREATE COMMENT -->
+    <api>
+      <endpoint>POST /comments</endpoint>
+      <request>
+        {
+          "articleId": "string",
+          "content": "string",
+          "parentId": "string (optional)"
+        }
+      </request>
+      <response>
+        {
+          "success": true,
+          "data": {
+            "id": "string",
+            "content": "string",
+            "user": {
+              "id": "string",
+              "name": "string"
+            },
+            "createdAt": "date"
+          }
+        }
+      </response>
+    </api>
+
+    <!-- GET COMMENTS -->
+    <api>
+      <endpoint>GET /articles/:id/comments</endpoint>
+      <response>
+        {
+          "data": [
+            {
+              "id": "string",
+              "content": "string",
+              "user": {...},
+              "replies": [...]
+            }
+          ]
+        }
+      </response>
+    </api>
+
+    <!-- DELETE -->
+    <api>
+      <endpoint>DELETE /comments/:id</endpoint>
+      <response>
+        {
+          "success": true
+        }
+      </response>
+    </api>
+
+  </backend>
+
+  <!-- ================= FRONTEND ================= -->
+  <frontend>
+
+    <ui>
+
+      <!-- COMMENT BOX -->
+      <component>
+        <name>Comment Input</name>
+        <elements>
+          <element>Textarea</element>
+          <element>Submit Button</element>
+        </elements>
+      </component>
+
+      <!-- COMMENT LIST -->
+      <component>
+        <name>Comment List</name>
+        <features>
+          <feature>Nested replies</feature>
+          <feature>User avatar + name</feature>
+          <feature>Timestamp</feature>
+        </features>
+      </component>
+
+      <!-- ACTIONS -->
+      <actions>
+        <action>Reply</action>
+        <action>Delete (owner only)</action>
+      </actions>
+
+    </ui>
+
+  </frontend>
+
+  <!-- ================= LOGIC ================= -->
+  <logic>
+    <rule>Only authenticated users can comment</rule>
+    <rule>Soft delete using deletedAt</rule>
+    <rule>Replies use parentId</rule>
+  </logic>
+
+  <!-- ================= EDGE ================= -->
+  <edge_cases>
+    <case>Empty content → reject</case>
+    <case>Deleted comment → show "Comment removed"</case>
+    <case>Deep nesting → limit levels (optional)</case>
+  </edge_cases>
+
+  <acceptance_criteria>
+    <criteria>User can comment and reply</criteria>
+    <criteria>Comments persist correctly</criteria>
+    <criteria>Nested structure works</criteria>
+  </acceptance_criteria>
+
+</task>

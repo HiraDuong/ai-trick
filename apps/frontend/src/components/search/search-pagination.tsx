@@ -8,19 +8,31 @@ interface SearchPaginationProps {
   skip: number;
   limit: number;
   pagination: SearchPaginationDto;
+  tagId?: string;
 }
 
-function buildSearchHref(query: string, nextSkip: number, limit: number): string {
+function buildResultsHref(query: string, nextSkip: number, limit: number, tagId?: string): string {
   const params = new URLSearchParams({
-    q: query,
     skip: String(nextSkip),
     limit: String(limit),
   });
 
+  if (tagId) {
+    if (query) {
+      params.set("name", query.replace(/^#+/, ""));
+    }
+
+    return `/tags/${tagId}?${params.toString()}`;
+  }
+
+  if (query) {
+    params.set("q", query);
+  }
+
   return `/search?${params.toString()}`;
 }
 
-export function SearchPagination({ query, skip, limit, pagination }: SearchPaginationProps) {
+export function SearchPagination({ query, skip, limit, pagination, tagId }: SearchPaginationProps) {
   const previousSkip = Math.max(skip - limit, 0);
   const canGoPrevious = skip > 0;
   const canGoNext = pagination.hasMore && pagination.nextSkip !== null;
@@ -34,7 +46,7 @@ export function SearchPagination({ query, skip, limit, pagination }: SearchPagin
       <div className="flex items-center gap-3">
         {canGoPrevious ? (
           <Link
-            href={buildSearchHref(query, previousSkip, limit)}
+            href={buildResultsHref(query, previousSkip, limit, tagId)}
             className="rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
             Previous
@@ -47,7 +59,7 @@ export function SearchPagination({ query, skip, limit, pagination }: SearchPagin
 
         {canGoNext ? (
           <Link
-            href={buildSearchHref(query, pagination.nextSkip!, limit)}
+            href={buildResultsHref(query, pagination.nextSkip!, limit, tagId)}
             className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-accent-contrast)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)]"
           >
             Next

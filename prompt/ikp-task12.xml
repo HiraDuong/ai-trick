@@ -1,0 +1,85 @@
+<task id="seed-engagement-e2e">
+  <context>
+    <description>
+      The article engagement feature (helpfulness voting) is fully implemented in both backend and frontend.
+      However, there are currently no published articles in the database, which blocks end-to-end testing.
+    </description>
+    <current_state>
+      <backend>Helpfulness summary API is implemented and working</backend>
+      <frontend>Engagement panel is implemented and integrated</frontend>
+      <infra>Backend and frontend servers run successfully</infra>
+      <blocker>No published articles available for testing</blocker>
+    </current_state>
+  </context>
+
+  <objectives>
+    <objective>Create realistic seed data</objective>
+    <objective>Enable full end-to-end testing</objective>
+    <objective>Provide reusable seed script for developers</objective>
+  </objectives>
+
+  <tasks>
+    <task>
+      <title>Create seed article</title>
+      <requirements>
+        <requirement>At least one article must be created</requirement>
+        <requirement>Status must be "published"</requirement>
+        <requirement>Include meaningful title and content</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Create helpfulness votes</title>
+      <requirements>
+        <requirement>Add both "helpful" and "not_helpful" votes</requirement>
+        <requirement>Associate votes with different users if applicable</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Implement seed script</title>
+      <requirements>
+        <requirement>Create a reusable script (e.g. seed-engagement.ts)</requirement>
+        <requirement>Ensure idempotency (no duplicate data on re-run)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add package command</title>
+      <requirements>
+        <requirement>Add script like "pnpm seed:engagement"</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Verify end-to-end</title>
+      <requirements>
+        <requirement>Article detail page loads in browser</requirement>
+        <requirement>Engagement panel displays real data</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Verify interaction</title>
+      <requirements>
+        <requirement>Voting triggers API call</requirement>
+        <requirement>UI updates correctly after voting</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Handle edge cases</title>
+      <requirements>
+        <requirement>Zero votes state is handled</requirement>
+        <requirement>API failure is handled gracefully</requirement>
+      </requirements>
+    </task>
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>At least one article detail page is accessible</criteria>
+    <criteria>Engagement panel displays real backend data</criteria>
+    <criteria>Voting works end-to-end</criteria>
+    <criteria>Seed script is reusable</criteria>
+  </acceptance_criteria>
+</task>

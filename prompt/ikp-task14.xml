@@ -1,0 +1,96 @@
+<task id="14-bookmark-feature">
+
+  <objective>
+    Allow users to save articles and manage a personal bookmark list.
+  </objective>
+
+  <!-- ================= DB ================= -->
+  <database>
+    <schema>
+      Bookmark (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        articleId TEXT,
+        createdAt TIMESTAMP,
+        UNIQUE(userId, articleId)
+      )
+    </schema>
+  </database>
+
+  <!-- ================= API ================= -->
+  <backend>
+
+    <api>
+      <endpoint>POST /bookmarks</endpoint>
+      <request>
+        {
+          "articleId": "string"
+        }
+      </request>
+      <response>
+        {
+          "success": true,
+          "data": {
+            "articleId": "string",
+            "bookmarked": true
+          }
+        }
+      </response>
+    </api>
+
+    <api>
+      <endpoint>DELETE /bookmarks/:articleId</endpoint>
+      <response>
+        {
+          "success": true,
+          "data": {
+            "articleId": "string",
+            "bookmarked": false
+          }
+        }
+      </response>
+    </api>
+
+    <api>
+      <endpoint>GET /bookmarks</endpoint>
+      <response>
+        {
+          "success": true,
+          "data": [
+            {
+              "articleId": "string",
+              "title": "string",
+              "excerpt": "string",
+              "createdAt": "date"
+            }
+          ]
+        }
+      </response>
+    </api>
+
+  </backend>
+
+  <!-- ================= FRONTEND ================= -->
+  <frontend>
+
+    <ui>
+      <component>Bookmark Button</component>
+      <states>
+        <state>Saved</state>
+        <state>Not Saved</state>
+        <state>Loading</state>
+      </states>
+    </ui>
+
+    <pages>
+      <page>/bookmarks</page>
+    </pages>
+
+  </frontend>
+
+  <edge_cases>
+    <case>User not logged in → show login prompt</case>
+    <case>Duplicate bookmark → prevent insert</case>
+  </edge_cases>
+
+</task>

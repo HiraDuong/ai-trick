@@ -1,0 +1,81 @@
+<task_set id="post_tasks_14_22_polish">
+
+  <meta>
+    <goal>Improve product quality and stability. Do NOT add new features.</goal>
+    <rules>
+      <rule>Do not refactor unrelated systems</rule>
+      <rule>Do not expand scope</rule>
+      <rule>Only modify necessary modules</rule>
+    </rules>
+  </meta>
+
+  <task id="autosave_improvement" priority="high">
+    <description>Fix autosave behavior in studio/editor</description>
+    <requirements>
+      <requirement>Trigger autosave only when content changes (dirty check)</requirement>
+      <requirement>Add debounce (5-10 seconds after last change)</requirement>
+      <requirement>Prevent concurrent autosave requests</requirement>
+      <requirement>Show saving/saved indicator in UI</requirement>
+    </requirements>
+  </task>
+
+  <task id="version_system_optimization" priority="high">
+    <description>Improve article version system</description>
+    <requirements>
+      <requirement>Skip creating version if content is identical</requirement>
+      <requirement>Limit versions (keep last 20 per article)</requirement>
+      <requirement>Ensure restore does not create duplicate unnecessary versions</requirement>
+    </requirements>
+  </task>
+
+  <task id="notification_improvement" priority="medium">
+    <description>Improve notification system usability</description>
+    <requirements>
+      <requirement>Add read/unread state</requirement>
+      <requirement>Create mark-as-read endpoint</requirement>
+      <requirement>Add pagination or limit (e.g., latest 20)</requirement>
+    </requirements>
+  </task>
+
+  <task id="stats_reliability" priority="medium">
+    <description>Improve stats accuracy and prevent abuse</description>
+    <requirements>
+      <requirement>Prevent duplicate view count from same session</requirement>
+      <requirement>Add basic rate limiting (per IP or session)</requirement>
+    </requirements>
+  </task>
+
+  <task id="comment_ux_improvement" priority="medium">
+    <description>Improve comment UX and validation</description>
+    <requirements>
+      <requirement>Add confirmation before delete</requirement>
+      <requirement>Render "(deleted)" clearly for soft-deleted comments</requirement>
+      <requirement>Prevent empty comment submission</requirement>
+    </requirements>
+  </task>
+
+  <execution>
+    <order>
+      <step>autosave_improvement</step>
+      <step>version_system_optimization</step>
+      <step>notification_improvement</step>
+      <step>stats_reliability</step>
+      <step>comment_ux_improvement</step>
+    </order>
+  </execution>
+
+  <output_format>
+    <format>
+      <![CDATA[
+<status_report>
+  <done></done>
+  <in_progress></in_progress>
+  <blocked></blocked>
+  <files_changed></files_changed>
+  <next_plan></next_plan>
+</status_report>
+      ]]>
+    </format>
+  </output_format>
+
+</task_set>

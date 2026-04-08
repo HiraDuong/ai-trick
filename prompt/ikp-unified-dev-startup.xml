@@ -1,0 +1,106 @@
+<task id="unified-dev-startup">
+  <context>
+    <description>
+      The project currently requires multiple manual commands to start backend, frontend,
+      and database services. This creates friction for development and onboarding.
+    </description>
+    <current_state>
+      <issue>Developers must run multiple commands manually</issue>
+      <issue>Environment variables are not centralized</issue>
+      <issue>Startup process is error-prone and inconsistent</issue>
+    </current_state>
+  </context>
+
+  <objectives>
+    <objective>Create a single command to start the full development environment</objective>
+    <objective>Centralize environment variable management</objective>
+    <objective>Improve developer experience and onboarding</objective>
+  </objectives>
+
+  <tasks>
+
+    <task>
+      <title>Create unified startup script</title>
+      <requirements>
+        <requirement>Create a script file (e.g. dev.sh or start-dev.sh)</requirement>
+        <requirement>Script should start:
+          - Backend server
+          - Frontend server
+          - Database (if applicable, e.g. Docker)
+        </requirement>
+        <requirement>Ensure proper startup order (DB → Backend → Frontend)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Environment variable management</title>
+      <requirements>
+        <requirement>Create a .env file if not exists</requirement>
+        <requirement>Load environment variables in the script</requirement>
+        <requirement>Support variables such as:
+          - DATABASE_URL
+          - PORT
+          - API_BASE_URL
+          - JWT_SECRET
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Support cross-platform execution</title>
+      <requirements>
+        <requirement>Ensure compatibility for Unix-based systems (bash)</requirement>
+        <requirement>Optionally provide Windows alternative (e.g. dev.ps1)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Process management</title>
+      <requirements>
+        <requirement>Run backend and frontend concurrently</requirement>
+        <requirement>Ensure logs are visible and separated</requirement>
+        <requirement>Handle process termination gracefully (Ctrl+C stops all)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Add package.json command</title>
+      <requirements>
+        <requirement>Add script:
+          "dev": "bash ./dev.sh"
+        </requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Optional Docker support</title>
+      <requirements>
+        <requirement>If database uses Docker, include docker-compose up</requirement>
+        <requirement>Ensure containers are ready before backend starts</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Documentation</title>
+      <requirements>
+        <requirement>Update README with instructions</requirement>
+        <requirement>Explain how to configure .env</requirement>
+        <requirement>Explain how to run the project with a single command</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Project can be started with a single command</criteria>
+    <criteria>Environment variables are loaded correctly</criteria>
+    <criteria>Frontend and backend run concurrently</criteria>
+    <criteria>Developers do not need to manually start services</criteria>
+  </acceptance_criteria>
+
+  <notes>
+    <note>Prefer simple and maintainable solution</note>
+    <note>Avoid over-engineering</note>
+    <note>Ensure compatibility with existing project structure</note>
+  </notes>
+</task>

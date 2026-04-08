@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleDetailView } from "@/components/articles/article-detail-view";
-import { fetchArticleDetail } from "@/lib/api";
+import { fetchArticleComments, fetchArticleDetail, fetchArticleHelpfulness, fetchArticleReactions, fetchArticleStats } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -48,5 +48,20 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     );
   }
 
-  return <ArticleDetailView article={result.data} />;
+  const [commentsResult, helpfulnessResult, statsResult, reactionsResult] = await Promise.all([
+    fetchArticleComments(articleId),
+    fetchArticleHelpfulness(articleId),
+    fetchArticleStats(articleId),
+    fetchArticleReactions(articleId),
+  ]);
+
+  return (
+    <ArticleDetailView
+      article={result.data}
+      commentsResult={commentsResult}
+      helpfulnessResult={helpfulnessResult}
+      statsResult={statsResult}
+      reactionsResult={reactionsResult}
+    />
+  );
 }

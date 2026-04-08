@@ -162,6 +162,35 @@
       Design APIs that can support future Elasticsearch integration
     </rule>
 
+<file_header_rules>
+
+  <rule>
+    Every source code file MUST include a header comment at the top.
+  </rule>
+
+  <rule>
+    The header must follow this exact format:
+  </rule>
+
+  <format>
+    Line 1: Company name
+    Line 2: Developer name and department
+  </format>
+
+  <example>
+    // Luvina
+    // Vu Huy Hoang - Dev2
+  </example>
+
+  <constraints>
+    - Must appear at the very top of the file
+    - Must be present in all source files (backend & frontend)
+    - Must NOT be omitted
+  </constraints>
+<rule>
+  If a file is generated without header comment, it is considered invalid.
+</rule>
+</file_header_rules>
   </scalability>
 
 </ai_global_rules>

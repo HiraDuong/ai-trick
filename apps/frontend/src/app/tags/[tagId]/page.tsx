@@ -1,0 +1,76 @@
+// Luvina
+// Vu Huy Hoang - Dev2
+import { SearchHero } from "@/components/search/search-hero";
+import { SearchPagination } from "@/components/search/search-pagination";
+import { SearchResultCard } from "@/components/search/search-result-card";
+import { SearchStatePanel } from "@/components/search/search-state-panel";
+import { fetchSearchResults } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
+
+interface TagPageProps {
+  params: Promise<{ tagId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function readString(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
+}
+
+function parseInteger(value: string | string[] | undefined, fallback: number): number {
+  const normalizedValue = Array.isArray(value) ? value[0] : value;
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  const parsedValue = Number.parseInt(normalizedValue, 10);
+  return Number.isInteger(parsedValue) && parsedValue >= 0 ? parsedValue : fallback;
+}
+
+export default async function TagPage({ params, searchParams }: TagPageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const fallbackTagName = readString(resolvedSearchParams.name).trim();
+  const skip = parseInteger(resolvedSearchParams.skip, 0);
+  const limit = Math.min(Math.max(parseInteger(resolvedSearchParams.limit, 6), 1), 12);
+
+  const result = await fetchSearchResults("", skip, limit, {
+    tagId: resolvedParams.tagId,
+    tag: fallbackTagName,
+  });
+
+  const errorMessage = !result.ok ? result.message : null;
+  const searchData = result.ok ? result.data : null;
+  const tagLabel = searchData?.tag?.name ?? fallbackTagName;
+
+  return (
+    <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <SearchHero query={tagLabel || "Selected tag"} mode="tag" />
+
+        {errorMessage ? (
+          <SearchStatePanel eyebrow="Tag unavailable" message={errorMessage} tone="danger" />
+        ) : !searchData || searchData.items.length === 0 ? (
+          <SearchStatePanel
+            eyebrow="No tagged articles yet"
+            message={tagLabel ? `No published articles are linked to “#${tagLabel}”.` : "No published articles are linked to this tag yet."}
+          />
+        ) : (
+          <>
+            <section className="grid gap-5">
+              {searchData.items.map((item) => <SearchResultCard key={item.id} item={item} />)}
+            </section>
+
+            <SearchPagination
+              query={tagLabel}
+              skip={skip}
+              limit={limit}
+              pagination={searchData.pagination}
+              tagId={resolvedParams.tagId}
+            />
+          </>
+        )}
+      </div>
+    </main>
+  );
+}

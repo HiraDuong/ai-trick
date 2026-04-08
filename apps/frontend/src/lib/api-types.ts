@@ -14,6 +14,24 @@ export interface ApiErrorResponse {
   error: ApiErrorBody;
 }
 
+export interface AuthUserDto {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthResponseDto {
+  user: AuthUserDto;
+  accessToken: string;
+}
+
+export interface CurrentUserResponseDto {
+  user: AuthUserDto;
+}
+
 export interface CategoryNodeDto {
   id: string;
   name: string;
@@ -57,9 +75,47 @@ export interface DashboardFeedResponseDto {
   popularTags: PopularTagDto[];
 }
 
+export interface CommentAuthorDto {
+  id: string;
+  name: string;
+}
+
+export interface CommentDto {
+  id: string;
+  content: string;
+  articleId: string;
+  parentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  author: CommentAuthorDto;
+  replies: CommentDto[];
+}
+
+export interface CommentListPaginationDto {
+  limit: number;
+  skip: number;
+  hasMore: boolean;
+  nextSkip: number | null;
+}
+
+export interface CommentListResponseDto {
+  items: CommentDto[];
+  pagination: CommentListPaginationDto;
+}
+
+export interface HelpfulnessSummaryDto {
+  articleId: string;
+  helpfulCount: number;
+  notHelpfulCount: number;
+  userVote: "HELPFUL" | "NOT_HELPFUL" | null;
+}
+
 export interface SearchArticleItemDto {
   id: string;
   title: string;
+  excerpt: string;
+  highlightTerms: string[];
   publishedAt: string | null;
   views: number;
   createdAt: string;
@@ -80,8 +136,56 @@ export interface SearchPaginationDto {
 
 export interface SearchArticlesResponseDto {
   query: string;
+  tag: ArticleTagDto | null;
   items: SearchArticleItemDto[];
   pagination: SearchPaginationDto;
+}
+
+export interface ArticleStatsDto {
+  views: number;
+  comments: number;
+  helpful: number;
+  notHelpful: number;
+}
+
+export interface ReactionSummaryDto {
+  articleId: string;
+  likeCount: number;
+  loveCount: number;
+  laughCount: number;
+  userReaction: "LIKE" | "LOVE" | "LAUGH" | null;
+}
+
+export interface BookmarkDto {
+  articleId: string;
+  bookmarked: boolean;
+}
+
+export interface BookmarkListItemDto {
+  articleId: string;
+  title: string;
+  excerpt: string;
+  createdAt: string;
+}
+
+export interface NotificationDto {
+  id: string;
+  type: "ARTICLE_COMMENT" | "COMMENT_REPLY";
+  entityId: string;
+  isRead: boolean;
+  createdAt: string;
+  message: string;
+}
+
+export interface ArticleVersionDto {
+  id: string;
+  articleId: string;
+  contentSnapshot: unknown;
+  updatedAt: string;
+  updatedBy: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface ArticleTagDto {

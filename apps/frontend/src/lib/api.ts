@@ -5,8 +5,12 @@ import type {
   ApiSuccessResponse,
   ArticleDetailDto,
   ArticleListResponseDto,
+  ArticleStatsDto,
   CategoryTreeResponseDto,
+  CommentListResponseDto,
   DashboardFeedResponseDto,
+  HelpfulnessSummaryDto,
+  ReactionSummaryDto,
   SearchArticlesResponseDto,
 } from "./api-types";
 
@@ -80,6 +84,22 @@ export async function fetchArticleDetail(articleId: string): Promise<ApiResult<A
   return fetchApi<ArticleDetailDto>(`/articles/${articleId}`);
 }
 
+export async function fetchArticleComments(articleId: string, skip = 0, limit = 20): Promise<ApiResult<CommentListResponseDto>> {
+  return fetchApi<CommentListResponseDto>(`/articles/${articleId}/comments?skip=${skip}&limit=${limit}`);
+}
+
+export async function fetchArticleHelpfulness(articleId: string): Promise<ApiResult<HelpfulnessSummaryDto>> {
+  return fetchApi<HelpfulnessSummaryDto>(`/articles/${articleId}/helpfulness`);
+}
+
+export async function fetchArticleStats(articleId: string): Promise<ApiResult<ArticleStatsDto>> {
+  return fetchApi<ArticleStatsDto>(`/articles/${articleId}/stats`);
+}
+
+export async function fetchArticleReactions(articleId: string): Promise<ApiResult<ReactionSummaryDto>> {
+  return fetchApi<ReactionSummaryDto>(`/articles/${articleId}/reactions`);
+}
+
 export async function fetchCategoryTree(): Promise<ApiResult<CategoryTreeResponseDto>> {
   return fetchApi<CategoryTreeResponseDto>("/categories/tree");
 }
@@ -88,12 +108,31 @@ export async function fetchDashboardFeed(): Promise<ApiResult<DashboardFeedRespo
   return fetchApi<DashboardFeedResponseDto>("/dashboard/feed");
 }
 
-export async function fetchSearchResults(query: string, skip: number, limit: number): Promise<ApiResult<SearchArticlesResponseDto>> {
+interface FetchSearchResultsOptions {
+  tagId?: string;
+  tag?: string;
+}
+
+export async function fetchSearchResults(
+  query: string,
+  skip: number,
+  limit: number,
+  options?: FetchSearchResultsOptions
+): Promise<ApiResult<SearchArticlesResponseDto>> {
   const params = new URLSearchParams({
-    q: query,
     skip: String(skip),
     limit: String(limit),
   });
+
+  if (query) {
+    params.set("q", query);
+  }
+  if (options?.tagId) {
+    params.set("tagId", options.tagId);
+  }
+  if (options?.tag) {
+    params.set("tag", options.tag);
+  }
 
   return fetchApi<SearchArticlesResponseDto>(`/search/articles?${params.toString()}`);
 }

@@ -4,6 +4,8 @@ import Form from "next/form";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CategoryNodeDto } from "@/lib/api-types";
+import { AuthSessionControl } from "./auth-session-control";
+import { NotificationBell } from "./notification-bell";
 import { SidebarTree } from "./sidebar-tree";
 
 interface MainLayoutProps {
@@ -49,12 +51,28 @@ export function MainLayout({ children, categories, categoryError }: MainLayoutPr
                 </button>
               </Form>
 
-              <Link
-                href="/articles"
-                className="inline-flex items-center justify-center rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-[var(--color-accent-contrast)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)]"
-              >
-                Open archive
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/articles"
+                  className="inline-flex items-center justify-center rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-[var(--color-accent-contrast)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)]"
+                >
+                  Open archive
+                </Link>
+                <Link
+                  href="/bookmarks"
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  Bookmarks
+                </Link>
+                <Link
+                  href="/studio"
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  Studio
+                </Link>
+                <NotificationBell />
+                <AuthSessionControl />
+              </div>
             </div>
           </div>
         </header>

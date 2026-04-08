@@ -1,0 +1,36 @@
+<task id="master-feature-expansion">
+
+  <context>
+    <description>
+      Expand the current article system into a production-ready product by implementing
+      advanced user-facing features including bookmarking, statistics, search, tagging,
+      autosave, versioning UI, reactions, and notifications.
+
+      Each feature must include:
+      - Database schema updates
+      - Backend APIs (request + response)
+      - Frontend UI components
+      - Proper state handling and validation
+    </description>
+  </context>
+
+  <tasks>
+
+    <task id="14">Bookmark Feature</task>
+    <task id="15">Article Statistics</task>
+    <task id="16">Enhanced Search</task>
+    <task id="17">Tag Detail Page</task>
+    <task id="18">Draft Autosave</task>
+    <task id="19">Version History UI</task>
+    <task id="20">Reaction System</task>
+    <task id="21">Notification System</task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>All features are fully functional end-to-end</criteria>
+    <criteria>APIs return consistent structured responses</criteria>
+    <criteria>UI is intuitive and responsive</criteria>
+  </acceptance_criteria>
+
+</task>

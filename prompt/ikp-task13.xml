@@ -1,0 +1,91 @@
+<task id="auth-login-flow">
+  <context>
+    <description>
+      The frontend currently uses a manual JWT paste mechanism to simulate authentication.
+      This is a temporary workaround and must be replaced with a proper login flow.
+    </description>
+    <current_state>
+      <backend>Authentication API exists and returns JWT</backend>
+      <frontend>No login page available</frontend>
+      <workaround>User manually pastes JWT token</workaround>
+    </current_state>
+  </context>
+
+  <objectives>
+    <objective>Implement proper login flow</objective>
+    <objective>Remove manual token input</objective>
+    <objective>Enable authenticated interactions</objective>
+  </objectives>
+
+  <tasks>
+    <task>
+      <title>Create login page</title>
+      <requirements>
+        <requirement>Route: /login</requirement>
+        <requirement>Fields: email/username and password</requirement>
+        <requirement>Call backend auth API on submit</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Store authentication state</title>
+      <requirements>
+        <requirement>Store JWT in localStorage (or equivalent)</requirement>
+        <requirement>Provide helper functions (get/set/clear token)</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Attach token to API</title>
+      <requirements>
+        <requirement>Automatically include Authorization header</requirement>
+        <requirement>Format: Bearer &lt;token&gt;</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Remove manual token UI</title>
+      <requirements>
+        <requirement>Delete textarea for JWT input</requirement>
+        <requirement>Remove related state and logic</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Update engagement panel</title>
+      <requirements>
+        <requirement>If not logged in, show "Log in to vote"</requirement>
+        <requirement>Provide link to /login</requirement>
+        <requirement>If logged in, enable voting</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Handle login state</title>
+      <requirements>
+        <requirement>Redirect after login</requirement>
+        <requirement>Maintain logged-in state across refresh</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Error handling</title>
+      <requirements>
+        <requirement>Show error on login failure</requirement>
+        <requirement>Handle expired/invalid token</requirement>
+      </requirements>
+    </task>
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>User can log in via UI</criteria>
+    <criteria>Token is automatically used in API calls</criteria>
+    <criteria>Voting requires authentication</criteria>
+    <criteria>Manual JWT input UI is removed</criteria>
+  </acceptance_criteria>
+
+  <notes>
+    <note>Keep implementation minimal but extensible</note>
+    <note>Do not break existing API integrations</note>
+  </notes>
+</task>

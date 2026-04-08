@@ -5,6 +5,9 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "bash ./dev.sh",
+    "dev:windows": "powershell -ExecutionPolicy Bypass -File ./dev.ps1",
+    "dev:runner": "node ./scripts/dev-runner.mjs",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "db:up": "docker compose -f infra/docker-compose.postgres.yml up -d",
@@ -12,7 +15,8 @@
     "db:logs": "docker compose -f infra/docker-compose.postgres.yml logs -f postgres",
     "compose:up": "docker compose -f infra/docker-compose.yml up -d --build",
     "compose:down": "docker compose -f infra/docker-compose.yml down",
-    "compose:logs": "docker compose -f infra/docker-compose.yml logs -f"
+    "compose:logs": "docker compose -f infra/docker-compose.yml logs -f",
+    "test:task26:be": "npm --prefix apps/backend run test:task26:be"
   },
   "engines": {
     "node": ">=20"

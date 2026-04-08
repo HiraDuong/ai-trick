@@ -1,0 +1,21 @@
+<task id="19-version-history">
+
+  <objective>
+    Allow users to view and restore previous versions.
+  </objective>
+
+  <backend>
+    <api>
+      <endpoint>GET /articles/:id/versions</endpoint>
+      <endpoint>POST /articles/:id/restore</endpoint>
+    </api>
+  </backend>
+
+  <frontend>
+    <ui>
+      <component>Version List</component>
+      <button>Restore</button>
+    </ui>
+  </frontend>
+
+</task>
