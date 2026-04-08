@@ -34,7 +34,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 
 USER nextjs
 EXPOSE 8080
-ENV PORT=8080
 ENV HOSTNAME=0.0.0.0
 
 CMD ["sh", "-c", "npm run start:cloudrun -- --port ${PORT:-8080}"]

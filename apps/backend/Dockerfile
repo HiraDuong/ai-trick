@@ -23,7 +23,6 @@ RUN npm run prisma:generate \
 FROM base AS runner
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=8080
 
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs express
