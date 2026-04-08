@@ -17,43 +17,43 @@ gcloud config set project "$GCP_PROJECT_ID" >/dev/null
 gcloud config set run/region "$GCP_REGION" >/dev/null
 
 deploy_args=(
-  run deploy "$CLOUD_RUN_BACKEND_SERVICE"
-  --image "$BACKEND_IMAGE_URI"
-  --platform managed
-  --region "$GCP_REGION"
-  --port 8080
+	run deploy "$CLOUD_RUN_BACKEND_SERVICE"
+	--image "$BACKEND_IMAGE_URI"
+	--platform managed
+	--region "$GCP_REGION"
+	--port 8080
 )
 
 if [[ "${BACKEND_ALLOW_UNAUTHENTICATED:-true}" == "true" ]]; then
-  deploy_args+=(--allow-unauthenticated)
+	deploy_args+=(--allow-unauthenticated)
 else
-  deploy_args+=(--no-allow-unauthenticated)
+	deploy_args+=(--no-allow-unauthenticated)
 fi
 
 if [[ -n "${BACKEND_SERVICE_ACCOUNT:-}" ]]; then
-  deploy_args+=(--service-account "$BACKEND_SERVICE_ACCOUNT")
+	deploy_args+=(--service-account "$BACKEND_SERVICE_ACCOUNT")
 fi
 
 if [[ -n "${BACKEND_INGRESS:-}" ]]; then
-  deploy_args+=(--ingress "$BACKEND_INGRESS")
+	deploy_args+=(--ingress "$BACKEND_INGRESS")
 fi
 
-env_vars=("NODE_ENV=production" "HOST=0.0.0.0" "PORT=8080" "DATABASE_URL=${BACKEND_DATABASE_URL}" "JWT_SECRET=${BACKEND_JWT_SECRET}")
+env_vars=("NODE_ENV=production" "HOST=0.0.0.0" "DATABASE_URL=${BACKEND_DATABASE_URL}" "JWT_SECRET=${BACKEND_JWT_SECRET}")
 
 if [[ -n "${BACKEND_SHADOW_DATABASE_URL:-}" ]]; then
-  env_vars+=("SHADOW_DATABASE_URL=${BACKEND_SHADOW_DATABASE_URL}")
+	env_vars+=("SHADOW_DATABASE_URL=${BACKEND_SHADOW_DATABASE_URL}")
 fi
 
 if [[ -n "${BACKEND_CORS_ORIGIN:-}" ]]; then
-  env_vars+=("CORS_ORIGIN=${BACKEND_CORS_ORIGIN}")
+	env_vars+=("CORS_ORIGIN=${BACKEND_CORS_ORIGIN}")
 fi
 
 if [[ -n "${BACKEND_JWT_EXPIRES_IN:-}" ]]; then
-  env_vars+=("JWT_EXPIRES_IN=${BACKEND_JWT_EXPIRES_IN}")
+	env_vars+=("JWT_EXPIRES_IN=${BACKEND_JWT_EXPIRES_IN}")
 fi
 
 if (( ${#env_vars[@]} > 0 )); then
-  deploy_args+=(--set-env-vars "$(IFS=,; echo "${env_vars[*]}")")
+	deploy_args+=(--set-env-vars "$(IFS=,; echo "${env_vars[*]}")")
 fi
 
 gcloud "${deploy_args[@]}"

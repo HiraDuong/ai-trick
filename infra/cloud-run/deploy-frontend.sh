@@ -8,7 +8,7 @@ set -euo pipefail
 : "${IMAGE_TAG:?IMAGE_TAG is required}"
 
 if [[ -z "${NEXT_PUBLIC_API_BASE_URL:-}" && -n "${BACKEND_URL:-}" ]]; then
-  NEXT_PUBLIC_API_BASE_URL="$BACKEND_URL"
+	NEXT_PUBLIC_API_BASE_URL="$BACKEND_URL"
 fi
 
 FRONTEND_IMAGE_NAME="${FRONTEND_IMAGE_NAME:-frontend}"
@@ -19,35 +19,35 @@ gcloud config set project "$GCP_PROJECT_ID" >/dev/null
 gcloud config set run/region "$GCP_REGION" >/dev/null
 
 deploy_args=(
-  run deploy "$CLOUD_RUN_FRONTEND_SERVICE"
-  --image "$FRONTEND_IMAGE_URI"
-  --platform managed
-  --region "$GCP_REGION"
-  --port 8080
+	run deploy "$CLOUD_RUN_FRONTEND_SERVICE"
+	--image "$FRONTEND_IMAGE_URI"
+	--platform managed
+	--region "$GCP_REGION"
+	--port 8080
 )
 
 if [[ "${FRONTEND_ALLOW_UNAUTHENTICATED:-true}" == "true" ]]; then
-  deploy_args+=(--allow-unauthenticated)
+	deploy_args+=(--allow-unauthenticated)
 else
-  deploy_args+=(--no-allow-unauthenticated)
+	deploy_args+=(--no-allow-unauthenticated)
 fi
 
 if [[ -n "${FRONTEND_SERVICE_ACCOUNT:-}" ]]; then
-  deploy_args+=(--service-account "$FRONTEND_SERVICE_ACCOUNT")
+	deploy_args+=(--service-account "$FRONTEND_SERVICE_ACCOUNT")
 fi
 
 if [[ -n "${FRONTEND_INGRESS:-}" ]]; then
-  deploy_args+=(--ingress "$FRONTEND_INGRESS")
+	deploy_args+=(--ingress "$FRONTEND_INGRESS")
 fi
 
-env_vars=("NODE_ENV=production" "HOSTNAME=0.0.0.0" "PORT=8080")
+env_vars=("NODE_ENV=production" "HOSTNAME=0.0.0.0")
 
 if [[ -n "${NEXT_PUBLIC_API_BASE_URL:-}" ]]; then
-  env_vars+=("NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}")
+	env_vars+=("NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}")
 fi
 
 if (( ${#env_vars[@]} > 0 )); then
-  deploy_args+=(--set-env-vars "$(IFS=,; echo "${env_vars[*]}")")
+	deploy_args+=(--set-env-vars "$(IFS=,; echo "${env_vars[*]}")")
 fi
 
 gcloud "${deploy_args[@]}"
