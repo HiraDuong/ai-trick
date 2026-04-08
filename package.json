@@ -1,0 +1,10 @@
+{
+  "name": "hackathon-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "bash ./dev.sh",
+    "dev:windows": "powershell -ExecutionPolicy Bypass -File ./dev.ps1",
+    "dev:runner": "node ./scripts/dev-runner.mjs",
+    "test:task26:be": "npm --prefix apps/backend run test:task26:be"
+  }
+}
