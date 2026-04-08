@@ -142,14 +142,13 @@ export default async function Home() {
           </section>
         ) : null}
       </div>
-
-      {/* Floating action button for creating a new article */}
       <Link
         href="/articles/new"
         aria-label="Create new article"
-        className="fixed bottom-8 right-8 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-accent-contrast)] shadow-[0_18px_45px_rgba(0,0,0,0.35)] transition-transform transition-colors duration-200 hover:scale-105 hover:bg-[var(--color-accent-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] sm:h-16 sm:w-16"
+        title="Create post"
+        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent)] text-3xl font-semibold text-[var(--color-accent-contrast)] shadow-[0_18px_40px_rgba(33,37,41,0.22)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)]"
       >
-        <span className="text-2xl sm:text-3xl leading-none">+</span>
+        +
       </Link>
     </main>
   );

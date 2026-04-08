@@ -6,6 +6,7 @@ import type { ArticleDetailDto, ArticleStatsDto, CommentListResponseDto, Helpful
 import { formatArticleDate, formatViewCount } from "@/lib/format";
 import { buildTagHref } from "@/lib/tag-links";
 import { ArticleBookmarkButton } from "./article-bookmark-button";
+import { ArticleDeleteButton } from "./article-delete-button";
 import { ArticleEngagementPanel } from "./article-engagement-panel";
 import { ArticleContentRenderer } from "./article-content-renderer";
 
@@ -34,6 +35,13 @@ export function ArticleDetailView({ article, commentsResult, helpfulnessResult, 
           </Link>
 
           <div className="flex items-center gap-3">
+            <Link
+              href={`/articles/${article.id}/edit`}
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            >
+              Edit article
+            </Link>
+            <ArticleDeleteButton articleId={article.id} />
             <ArticleBookmarkButton articleId={article.id} />
             <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-contrast)]">
               {article.status}

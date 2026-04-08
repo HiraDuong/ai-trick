@@ -1,13 +1,11 @@
-// Luvina
-// Vu Huy Hoang - Dev2
 "use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition, useState } from "react";
-import { loginWithCredentials, setStoredAccessToken } from "@/lib/auth";
+import { registerWithCredentials, setStoredAccessToken } from "@/lib/auth";
 
-interface LoginFormProps {
+interface RegisterFormProps {
   redirectTo: string;
 }
 
@@ -15,13 +13,14 @@ function normalizeRedirectPath(redirectTo: string): string {
   return redirectTo.startsWith("/") ? redirectTo : "/";
 }
 
-function buildRegisterHref(redirectTo: string): string {
+function buildLoginHref(redirectTo: string): string {
   const params = new URLSearchParams({ redirectTo: normalizeRedirectPath(redirectTo) });
-  return `/register?${params.toString()}`;
+  return `/login?${params.toString()}`;
 }
 
-export function LoginForm({ redirectTo }: LoginFormProps) {
+export function RegisterForm({ redirectTo }: RegisterFormProps) {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -29,11 +28,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const result = await loginWithCredentials(email.trim(), password);
+    const result = await registerWithCredentials(name.trim(), email.trim(), password);
     if (!result.ok) {
       setErrorMessage(result.message);
       setIsSubmitting(false);
@@ -41,7 +39,6 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     }
 
     setStoredAccessToken(result.data.accessToken);
-
     startTransition(() => {
       router.replace(normalizeRedirectPath(redirectTo));
       router.refresh();
@@ -51,18 +48,26 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
   return (
     <section className="rounded-[2.25rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-8 shadow-[0_24px_80px_rgba(33,37,41,0.08)] sm:p-10">
       <div className="max-w-2xl space-y-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--color-muted)]">
-          Authentication
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--color-muted)]">Authentication</p>
         <h1 className="text-4xl leading-[1.02] text-[var(--color-foreground)] [font-family:var(--font-display)] sm:text-6xl">
-          Log in to vote and keep track of your article feedback.
+          Create your account to start contributing knowledge.
         </h1>
-        <p className="text-base leading-8 text-[var(--color-muted)] sm:text-lg">
-          Use the backend auth API credentials. After a successful login, the app stores your access token for client requests and server-side protected page checks, then returns you to the page you came from.
-        </p>
       </div>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-[var(--color-foreground)]">Name</span>
+          <input
+            type="text"
+            autoComplete="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Your full name"
+            className="w-full rounded-[1.4rem] border border-[var(--color-line)] bg-white px-4 py-3 text-base text-[var(--color-foreground)] outline-none transition-colors duration-200 placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)]"
+            required
+          />
+        </label>
+
         <label className="block space-y-2">
           <span className="text-sm font-semibold text-[var(--color-foreground)]">Email</span>
           <input
@@ -70,7 +75,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="seed.reviewer1@ikp.local"
+            placeholder="you@company.com"
             className="w-full rounded-[1.4rem] border border-[var(--color-line)] bg-white px-4 py-3 text-base text-[var(--color-foreground)] outline-none transition-colors duration-200 placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)]"
             required
           />
@@ -80,11 +85,12 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           <span className="text-sm font-semibold text-[var(--color-foreground)]">Password</span>
           <input
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter your password"
+            placeholder="At least 8 characters"
             className="w-full rounded-[1.4rem] border border-[var(--color-line)] bg-white px-4 py-3 text-base text-[var(--color-foreground)] outline-none transition-colors duration-200 placeholder:text-[var(--color-muted)] focus:border-[var(--color-accent)]"
+            minLength={8}
             required
           />
         </label>
@@ -105,20 +111,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
                 : "bg-[var(--color-accent)] text-[var(--color-accent-contrast)] hover:bg-[var(--color-accent-strong)]"
             }`}
           >
-            {isSubmitting ? "Signing in..." : "Log in"}
+            {isSubmitting ? "Creating account..." : "Create account"}
           </button>
 
           <Link
-            href={normalizeRedirectPath(redirectTo)}
+            href={buildLoginHref(redirectTo)}
             className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
-            Cancel
-          </Link>
-          <Link
-            href={buildRegisterHref(redirectTo)}
-            className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-          >
-            Create account
+            I already have an account
           </Link>
         </div>
       </form>
