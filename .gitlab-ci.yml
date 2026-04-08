@@ -30,6 +30,9 @@ install:
   script:
     # npm install (không ci): lockfile từ Windows có thể thiếu optional native linux cho Tailwind v4.
     - npm install
+    # Frontend workspace cần refresh riêng trên Linux để materialize đúng lightningcss native binary.
+    - rm -rf apps/frontend/node_modules
+    - npm install --prefix apps/frontend --package-lock=false --include=optional
 
 build:
   stage: build
@@ -38,6 +41,8 @@ build:
   needs: ["install"]
   script:
     - npm install
+    - rm -rf apps/frontend/node_modules
+    - npm install --prefix apps/frontend --package-lock=false --include=optional
     - npm run prisma:generate --workspace=backend
     - npm run build --workspace=backend
     - npm run build --workspace=frontend
@@ -49,6 +54,8 @@ test:
   needs: ["install"]
   script:
     - npm install
+    - rm -rf apps/frontend/node_modules
+    - npm install --prefix apps/frontend --package-lock=false --include=optional
     - npm run lint --workspace=frontend
   allow_failure: true
 
