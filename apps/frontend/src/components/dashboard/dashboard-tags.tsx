@@ -2,6 +2,7 @@
 // Vu Huy Hoang - Dev2
 import Link from "next/link";
 import type { PopularTagDto } from "@/lib/api-types";
+import { buildTagHref } from "@/lib/tag-links";
 
 interface DashboardTagsProps {
   tags: PopularTagDto[];
@@ -25,7 +26,7 @@ export function DashboardTags({ tags }: DashboardTagsProps) {
           {tags.map((tag) => (
             <Link
               key={tag.id}
-              href={`/search?q=${encodeURIComponent(tag.name)}`}
+              href={buildTagHref(tag.id, tag.name)}
               className="inline-flex items-center gap-3 rounded-full border border-[var(--color-line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
             >
               <span>#{tag.name}</span>
