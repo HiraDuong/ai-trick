@@ -3,6 +3,12 @@
 # Legacy deploy: DEPLOY_SSH_PRIVATE_KEY, DEPLOY_HOST, DEPLOY_USER.
 # Cloud Run deploy: GCP_PROJECT_ID, GCP_REGION, GCP_SERVICE_ACCOUNT_KEY, BACKEND_URL.
 
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "production")'
+    - when: never
+
 stages:
   - install
   - build
@@ -15,6 +21,10 @@ stages:
 
 variables:
   NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+.release_job_rules: &release_job_rules
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "production")'
 
 .npm_cache: &npm_cache
   cache:
@@ -75,7 +85,7 @@ test:
 
 .cloud_run_job_rules: &cloud_run_job_rules
   rules:
-    - if: '$GCP_PROJECT_ID && $GCP_REGION && $GCP_SERVICE_ACCOUNT_KEY'
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "production") && $GCP_PROJECT_ID && $GCP_REGION && $GCP_SERVICE_ACCOUNT_KEY'
 
 .cloud_run_gcp_auth:
   image: google/cloud-sdk:slim
@@ -102,6 +112,7 @@ test:
 docker_backend:
   extends: .docker_job
   needs: ["build"]
+  <<: *release_job_rules
   script:
     - |
       /kaniko/executor \
@@ -113,6 +124,7 @@ docker_backend:
 docker_frontend:
   extends: .docker_job
   needs: ["build"]
+  <<: *release_job_rules
   script:
     - |
       /kaniko/executor \
