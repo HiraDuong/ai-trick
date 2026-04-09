@@ -133,8 +133,7 @@ docker_backend_cloudrun:
       /kaniko/executor \
         --context "$CI_PROJECT_DIR/apps/backend" \
         --dockerfile "$CI_PROJECT_DIR/apps/backend/Dockerfile" \
-        --destination "$IMAGE_BE" \
-        --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/backend:latest"
+        --destination "$IMAGE_BE"
 
 deploy_backend_cloudrun:
   stage: deploy-backend
@@ -171,8 +170,7 @@ docker_frontend_cloudrun:
         --context "$CI_PROJECT_DIR/apps/frontend" \
         --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
         --build-arg "NEXT_PUBLIC_API_BASE_URL=$FRONTEND_API_URL" \
-        --destination "$IMAGE_FE" \
-        --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:latest"
+        --destination "$IMAGE_FE"
 
 deploy_frontend_cloudrun:
   stage: deploy-frontend
@@ -184,9 +182,19 @@ deploy_frontend_cloudrun:
   script:
     - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
+    - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-frontend.sh
-    - gcloud run services describe "$CLOUD_RUN_FRONTEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)'
+    - export FRONTEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_FRONTEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
+    - test -n "$FRONTEND_SERVICE_URL"
+    - export BACKEND_CORS_ORIGIN_LIST="${BACKEND_CORS_ORIGIN:-http://localhost:3000}"
+    - |
+      case ",$BACKEND_CORS_ORIGIN_LIST," in
+        *",$FRONTEND_SERVICE_URL,"*) ;;
+        *) BACKEND_CORS_ORIGIN_LIST="$BACKEND_CORS_ORIGIN_LIST,$FRONTEND_SERVICE_URL" ;;
+      esac
+    - gcloud run services update "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --update-env-vars "^##^CORS_ORIGIN=$BACKEND_CORS_ORIGIN_LIST"
+    - printf 'Frontend URL: %s\nBackend CORS origins: %s\n' "$FRONTEND_SERVICE_URL" "$BACKEND_CORS_ORIGIN_LIST"
   environment:
     name: cloudrun-frontend
 

@@ -16,7 +16,20 @@ interface HealthLikeErrorResponse extends ApiErrorResponse {}
 
 const app = express();
 
-app.use(cors({ origin: config.corsOrigin }));
+const allowAllCorsOrigins = config.corsOrigins.includes("*");
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowAllCorsOrigins || config.corsOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("CORS origin not allowed"));
+    },
+  })
+);
 app.use(express.json());
 
 app.get(
