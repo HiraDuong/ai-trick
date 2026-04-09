@@ -7,7 +7,7 @@ This directory contains additive deployment helpers for running the frontend and
 - Frontend Cloud Run service: Next.js production server listening on `0.0.0.0:${PORT}`
 - Backend Cloud Run service: compiled Express + Prisma server listening on `0.0.0.0:${PORT}`
 
-Both Dockerfiles now default to `PORT=8080`, which matches Cloud Run expectations.
+Both Dockerfiles expose port `8080`, which matches Cloud Run expectations.
 
 ## Required Google Cloud variables
 
@@ -39,6 +39,42 @@ Optional:
 - `BACKEND_ALLOW_UNAUTHENTICATED` (`true` by default)
 - `BACKEND_INGRESS`
 - `BACKEND_SHADOW_DATABASE_URL`
+- `BACKEND_CLOUDSQL_INSTANCES`
+
+### Backend database guidance
+
+`BACKEND_DATABASE_URL` must point to a PostgreSQL endpoint that Cloud Run can actually reach.
+
+Unsupported hosts for Cloud Run runtime:
+
+- `db-host`
+- `localhost`
+- `127.0.0.1`
+- `postgres`
+
+These values are valid for local Docker or local development, but they will fail on Cloud Run unless you are using Cloud SQL Unix socket attachment.
+
+Supported patterns:
+
+- External or reachable PostgreSQL host:
+
+```text
+BACKEND_DATABASE_URL=postgresql://USER:PASSWORD@db.example.com:5432/ikp_db?schema=public
+```
+
+- Cloud SQL with instance attachment:
+
+```text
+BACKEND_CLOUDSQL_INSTANCES=PROJECT_ID:REGION:INSTANCE_NAME
+BACKEND_DATABASE_URL=postgresql://USER:PASSWORD@/ikp_db?host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME&schema=public
+```
+
+Notes:
+
+- When using `BACKEND_CLOUDSQL_INSTANCES`, the Cloud Run runtime service account also needs Cloud SQL access, typically `roles/cloudsql.client`.
+- If `BACKEND_CLOUDSQL_INSTANCES` is omitted but `BACKEND_DATABASE_URL` contains `host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME`, the deploy script will infer the instance attachment automatically.
+- The GitLab variable `BACKEND_DATABASE_URL` is copied into the deployed backend service as `DATABASE_URL`.
+- If the pipeline prints `Using backend database host: ...` followed by a local or placeholder host, fix the GitLab CI/CD variable rather than the application code.
 
 ## Frontend deploy variables
 
@@ -55,25 +91,27 @@ Optional:
 
 ## Important frontend note
 
-`NEXT_PUBLIC_API_BASE_URL` is bundled into the client build. The main GitLab pipeline now deploys the backend first, captures the resulting Cloud Run service URL, exports it as `BACKEND_URL`, and then builds the frontend image with that value.
+`NEXT_PUBLIC_API_BASE_URL` is bundled into the client build. The main GitLab pipeline deploys the backend first, captures the resulting Cloud Run service URL, exports it as `BACKEND_URL`, and then builds the frontend image with that value.
 
 Example:
 
 ```bash
 /kaniko/executor \
-  --context "$CI_PROJECT_DIR/apps/frontend" \
-  --dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
-  --build-arg "NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL" \
-  --destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHORT_SHA"
+	--context "$CI_PROJECT_DIR/apps/frontend" \
+	--dockerfile "$CI_PROJECT_DIR/apps/frontend/Dockerfile" \
+	--build-arg "NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL" \
+	--destination "$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REGISTRY_REPOSITORY/frontend:$CI_COMMIT_SHORT_SHA"
 ```
 
 ## GitLab CI usage
-Main `.gitlab-ci.yml` now includes Cloud Run jobs directly. Use `infra/cloud-run/gitlab-ci.cloudrun.yml` as an includeable example if you want to split that pipeline logic into a separate file.
-Use `infra/cloud-run/gitlab-ci.cloudrun.yml` as an includeable example for:
 
-- Kaniko image builds to Artifact Registry
-- `gcloud run deploy` for backend
-- `gcloud run deploy` for frontend
+Main `.gitlab-ci.yml` now includes Cloud Run jobs directly. Use `infra/cloud-run/gitlab-ci.cloudrun.yml` as an includeable example if you want to split that pipeline logic into a separate file.
+
+The Cloud Run jobs now also:
+
+- push commit-based immutable image tags only
+- deploy backend before frontend so `BACKEND_URL` is available at frontend build time
+- update backend CORS to include the deployed frontend service URL
 
 ## Local helper commands
 

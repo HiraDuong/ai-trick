@@ -1,0 +1,64 @@
+<task id="fix-cloud-run-production-deployment-drift">
+
+  <context>
+    <description>
+      The Google Cloud Run deployment flow reached production, but two deployment-specific
+      configuration issues remained: Artifact Registry tag immutability conflicted with
+      `latest` pushes, and backend CORS still allowed only the local development origin.
+    </description>
+  </context>
+
+  <problem>
+
+    <summary>
+      Cloud Run production deployment was unstable because build-time and runtime configuration drifted from production requirements.
+    </summary>
+
+    <details>
+      <issue>
+        The Cloud Run Kaniko jobs pushed both commit-specific tags and `latest`, but the target Artifact Registry repository had tag immutability enabled.
+      </issue>
+      <issue>
+        The backend service continued to emit `Access-Control-Allow-Origin: http://localhost:3000`, which blocked browser requests from the actual deployed frontend origin.
+      </issue>
+    </details>
+
+    <expected_behavior>
+      Production image publishing should succeed against immutable Artifact Registry repositories,
+      and deployed frontend/browser traffic should be accepted by backend CORS without requiring manual follow-up edits after each deploy.
+    </expected_behavior>
+
+    <actual_behavior>
+      Pipeline jobs failed during image push with `MANIFEST_INVALID`, and successful frontend deployments still could not call backend APIs because preflight requests were rejected.
+    </actual_behavior>
+
+  </problem>
+
+  <tasks>
+
+    <task>
+      <title>Align Artifact Registry tagging with immutability</title>
+      <requirements>
+        <requirement>Do not push `latest` for Cloud Run Artifact Registry images</requirement>
+        <requirement>Use immutable commit-based image tags for backend and frontend deploy jobs</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Keep backend CORS aligned with deployed frontend origin</title>
+      <requirements>
+        <requirement>Allow backend CORS configuration to contain multiple origins</requirement>
+        <requirement>Update backend Cloud Run service CORS origin list automatically after frontend deployment</requirement>
+        <requirement>Preserve local development origin access unless explicitly replaced</requirement>
+      </requirements>
+    </task>
+
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>Cloud Run image publishing no longer fails on immutable Artifact Registry repositories</criteria>
+    <criteria>Frontend Cloud Run can call backend Cloud Run APIs without CORS preflight rejection</criteria>
+    <criteria>Production deployment does not require manual CORS origin patching after each frontend rollout</criteria>
+  </acceptance_criteria>
+
+</task>
