@@ -23,6 +23,28 @@ function readRequiredString(value: string | undefined, variableName: string): st
   return value.trim();
 }
 
+function readDatabaseUrl(value: string | undefined, nodeEnv: string): string {
+  const databaseUrl = readRequiredString(value, "DATABASE_URL");
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(databaseUrl);
+  } catch {
+    throw new Error("DATABASE_URL must be a valid PostgreSQL connection string");
+  }
+
+  if (!["postgres:", "postgresql:"].includes(parsedUrl.protocol)) {
+    throw new Error("DATABASE_URL must use the postgres:// or postgresql:// scheme");
+  }
+
+  if (nodeEnv === "production" && parsedUrl.hostname === "db-host") {
+    throw new Error("DATABASE_URL still uses the placeholder host 'db-host'");
+  }
+
+  return databaseUrl;
+}
+
 function readJwtSecret(value: string | undefined, nodeEnv: string): string {
   const secret = readRequiredString(value, "JWT_SECRET");
 
@@ -54,7 +76,7 @@ const config: AppConfig = {
   host: process.env.HOST ?? "0.0.0.0",
   port: Number(process.env.PORT ?? 5000),
   corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-  databaseUrl: readRequiredString(process.env.DATABASE_URL, "DATABASE_URL"),
+  databaseUrl: readDatabaseUrl(process.env.DATABASE_URL, nodeEnv),
   jwtSecret: readJwtSecret(process.env.JWT_SECRET ?? "change-me", nodeEnv),
   jwtExpiresIn: readJwtExpiration(process.env.JWT_EXPIRES_IN ?? "7d"),
 };
