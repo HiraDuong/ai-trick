@@ -9,6 +9,13 @@ set -euo pipefail
 : "${BACKEND_DATABASE_URL:?BACKEND_DATABASE_URL is required}"
 : "${BACKEND_JWT_SECRET:?BACKEND_JWT_SECRET is required}"
 
+case "$BACKEND_DATABASE_URL" in
+	*@db-host:*|*@localhost:*|*@127.0.0.1:*|*@postgres:* )
+		echo "BACKEND_DATABASE_URL points to a local or placeholder host that Cloud Run cannot reach: $BACKEND_DATABASE_URL" >&2
+		exit 1
+		;;
+esac
+
 BACKEND_IMAGE_NAME="${BACKEND_IMAGE_NAME:-backend}"
 GAR_HOST="${GCP_REGION}-docker.pkg.dev"
 BACKEND_IMAGE_URI="${GAR_HOST}/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPOSITORY}/${BACKEND_IMAGE_NAME}:${IMAGE_TAG}"

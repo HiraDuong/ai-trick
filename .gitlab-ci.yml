@@ -144,6 +144,7 @@ deploy_backend_cloudrun:
   script:
     - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
+    - ': > cloudrun-backend.env'
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
     - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
     - test -n "$BACKEND_SERVICE_URL"
