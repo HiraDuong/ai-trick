@@ -9,9 +9,16 @@ set -euo pipefail
 : "${BACKEND_DATABASE_URL:?BACKEND_DATABASE_URL is required}"
 : "${BACKEND_JWT_SECRET:?BACKEND_JWT_SECRET is required}"
 
-case "$BACKEND_DATABASE_URL" in
-	*@db-host:*|*@localhost:*|*@127.0.0.1:*|*@postgres:* )
-		echo "BACKEND_DATABASE_URL points to a local or placeholder host that Cloud Run cannot reach: $BACKEND_DATABASE_URL" >&2
+database_host="${BACKEND_DATABASE_URL#*://}"
+database_host="${database_host#*@}"
+database_host="${database_host%%[/?]*}"
+database_host="${database_host%%:*}"
+
+echo "Using backend database host: ${database_host:-unknown}"
+
+case "$database_host" in
+	db-host|localhost|127.0.0.1|postgres)
+		echo "BACKEND_DATABASE_URL uses unsupported Cloud Run host '$database_host'. Update GitLab variable BACKEND_DATABASE_URL to a reachable PostgreSQL host." >&2
 		exit 1
 		;;
 esac
