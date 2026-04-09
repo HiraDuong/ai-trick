@@ -31,6 +31,7 @@ COPY --from=builder --chown=express:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=express:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=express:nodejs /app/dist ./dist
 COPY --from=builder --chown=express:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=express:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 USER express
 EXPOSE 8080
