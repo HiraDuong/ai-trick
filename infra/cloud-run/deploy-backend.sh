@@ -52,6 +52,10 @@ if [[ -n "${BACKEND_INGRESS:-}" ]]; then
 	deploy_args+=(--ingress "$BACKEND_INGRESS")
 fi
 
+if [[ -n "${BACKEND_CLOUDSQL_INSTANCES:-}" ]]; then
+	deploy_args+=(--add-cloudsql-instances "$BACKEND_CLOUDSQL_INSTANCES")
+fi
+
 env_vars=("NODE_ENV=production" "HOST=0.0.0.0" "DATABASE_URL=${BACKEND_DATABASE_URL}" "JWT_SECRET=${BACKEND_JWT_SECRET}")
 
 if [[ -n "${BACKEND_SHADOW_DATABASE_URL:-}" ]]; then
