@@ -159,6 +159,7 @@ deploy_backend_cloudrun:
     - ': > cloudrun-backend.env'
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend-migration-job.sh
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
+    - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend-seed-job.sh
     - export GCP_PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
     - export BACKEND_SERVICE_URL="https://${CLOUD_RUN_BACKEND_SERVICE}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"
     - test -n "$BACKEND_SERVICE_URL"

@@ -15,6 +15,7 @@
     "test:task34:be": "node --require ts-node/register/transpile-only src/scripts/task34-rbac-validation.ts",
     "test:search": "node --require ts-node/register/transpile-only --test src/utils/search.utils.test.ts",
     "seed:engagement": "ts-node src/scripts/seed-engagement.ts",
+    "seed:production": "node --require ts-node/register/transpile-only src/scripts/seed-production.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

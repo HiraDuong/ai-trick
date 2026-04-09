@@ -15,6 +15,13 @@ validate_backend_database_config "$database_host" "$effective_cloudsql_instances
 
 BACKEND_IMAGE_URI="$(build_backend_image_uri)"
 
+# Ensure CORS_ORIGIN includes the Cloud Run frontend origin from the start.
+if [[ -z "${BACKEND_CORS_ORIGIN:-}" ]]; then
+	CLOUD_RUN_FRONTEND_SERVICE="${CLOUD_RUN_FRONTEND_SERVICE:-frontend-service}"
+	FRONTEND_CLOUD_RUN_PATTERN="https://${CLOUD_RUN_FRONTEND_SERVICE}-*.${GCP_REGION}.run.app"
+	export BACKEND_CORS_ORIGIN="http://localhost:3000,${FRONTEND_CLOUD_RUN_PATTERN}"
+fi
+
 configure_backend_gcloud_context
 
 deploy_args=(
