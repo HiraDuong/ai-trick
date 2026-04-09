@@ -158,7 +158,8 @@ deploy_backend_cloudrun:
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - ': > cloudrun-backend.env'
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
-    - export BACKEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_BACKEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
+    - export GCP_PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+    - export BACKEND_SERVICE_URL="https://${CLOUD_RUN_BACKEND_SERVICE}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"
     - test -n "$BACKEND_SERVICE_URL"
     - printf 'BACKEND_URL=%s/api\n' "$BACKEND_SERVICE_URL" > cloudrun-backend.env
     - cat cloudrun-backend.env
@@ -198,7 +199,8 @@ deploy_frontend_cloudrun:
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - export NEXT_PUBLIC_API_BASE_URL="${BACKEND_URL:?BACKEND_URL is required}"
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-frontend.sh
-    - export FRONTEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_FRONTEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
+    - export GCP_PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+    - export FRONTEND_SERVICE_URL="https://${CLOUD_RUN_FRONTEND_SERVICE}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"
     - test -n "$FRONTEND_SERVICE_URL"
     - 'export FRONTEND_CLOUD_RUN_ORIGIN_PATTERN="https://${CLOUD_RUN_FRONTEND_SERVICE}-*.${GCP_REGION}.run.app"'
     - 'export BACKEND_CORS_ORIGIN_LIST="${BACKEND_CORS_ORIGIN:-http://localhost:3000,$FRONTEND_CLOUD_RUN_ORIGIN_PATTERN}"'
