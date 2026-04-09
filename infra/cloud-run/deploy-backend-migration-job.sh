@@ -20,11 +20,6 @@ BACKEND_MIGRATION_JOB="${CLOUD_RUN_BACKEND_MIGRATION_JOB:-${CLOUD_RUN_BACKEND_SE
 migration_service_account="${BACKEND_MIGRATION_SERVICE_ACCOUNT:-${BACKEND_SERVICE_ACCOUNT:-}}"
 migration_env_vars="$(build_backend_migration_env_vars)"
 
-# Debug: print sanitised DATABASE_URL structure (password masked)
-sanitised_url="$(printf '%s' "$BACKEND_DATABASE_URL" | sed -E 's|://([^:]+):[^@]+@|://\1:****@|')"
-echo "Migration DATABASE_URL structure: $sanitised_url"
-echo "Migration env-vars payload: $(printf '%s' "$migration_env_vars" | sed -E 's|://([^:]+):[^@]+@|://\1:****@|')"
-
 configure_backend_gcloud_context
 
 deploy_args=(
