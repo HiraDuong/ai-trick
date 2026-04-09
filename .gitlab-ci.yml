@@ -157,6 +157,7 @@ deploy_backend_cloudrun:
     - ': "${ARTIFACT_REGISTRY_REPOSITORY:?ARTIFACT_REGISTRY_REPOSITORY is required}"'
     - export CLOUD_RUN_BACKEND_SERVICE="${CLOUD_RUN_BACKEND_SERVICE:-backend-service}"
     - ': > cloudrun-backend.env'
+    - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend-migration-job.sh
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-backend.sh
     - export GCP_PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
     - export BACKEND_SERVICE_URL="https://${CLOUD_RUN_BACKEND_SERVICE}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"

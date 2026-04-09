@@ -5,12 +5,29 @@ import app from "./app";
 import config from "./config/env";
 import prisma from "./config/prisma";
 
-async function bootstrap(): Promise<void> {
+async function warmUpDatabase(): Promise<void> {
   try {
     await prisma.$connect();
+    console.log("Backend database connection ready");
+  } catch (error) {
+    console.error("Backend database warm-up failed", error);
+  }
+}
 
-    app.listen(config.port, config.host, () => {
-      console.log(`Backend server listening on ${config.host}:${config.port}`);
+function bootstrap(): void {
+  try {
+    console.log("Starting server...");
+    console.log("PORT:", process.env.PORT ?? String(config.port));
+
+    const server = app.listen(config.port, "0.0.0.0", () => {
+      console.log("Server started");
+      console.log(`Backend server listening on 0.0.0.0:${config.port}`);
+      void warmUpDatabase();
+    });
+
+    server.on("error", (error) => {
+      console.error("Failed to start backend server", error);
+      process.exit(1);
     });
   } catch (error) {
     console.error("Failed to start backend server", error);
@@ -18,4 +35,4 @@ async function bootstrap(): Promise<void> {
   }
 }
 
-void bootstrap();
+bootstrap();

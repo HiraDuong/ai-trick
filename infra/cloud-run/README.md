@@ -36,10 +36,12 @@ Optional:
 
 - `BACKEND_IMAGE_NAME` (default `backend`)
 - `BACKEND_SERVICE_ACCOUNT`
+- `BACKEND_MIGRATION_SERVICE_ACCOUNT` (defaults to `BACKEND_SERVICE_ACCOUNT`)
 - `BACKEND_ALLOW_UNAUTHENTICATED` (`true` by default)
 - `BACKEND_INGRESS`
 - `BACKEND_SHADOW_DATABASE_URL`
 - `BACKEND_CLOUDSQL_INSTANCES`
+- `CLOUD_RUN_BACKEND_MIGRATION_JOB` (defaults to `${CLOUD_RUN_BACKEND_SERVICE}-migrate`)
 
 ### Backend database guidance
 
@@ -75,6 +77,7 @@ Notes:
 - If `BACKEND_CLOUDSQL_INSTANCES` is omitted but `BACKEND_DATABASE_URL` contains `host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME`, the deploy script will infer the instance attachment automatically.
 - The GitLab variable `BACKEND_DATABASE_URL` is copied into the deployed backend service as `DATABASE_URL`.
 - If the pipeline prints `Using backend database host: ...` followed by a local or placeholder host, fix the GitLab CI/CD variable rather than the application code.
+- Backend schema migrations now run through a Cloud Run Job before the backend service deploys, so the HTTP container can bind `PORT=8080` immediately instead of blocking on `prisma migrate deploy` during startup.
 
 ## Frontend deploy variables
 
@@ -110,10 +113,16 @@ Main `.gitlab-ci.yml` now includes Cloud Run jobs directly. Use `infra/cloud-run
 The Cloud Run jobs now also:
 
 - push commit-based immutable image tags only
+- run backend migrations as a one-off Cloud Run Job before deploying the backend service
 - deploy backend before frontend so `BACKEND_URL` is available at frontend build time
 - update backend CORS to include the deployed frontend service URL
 
 ## Local helper commands
 
-- `npm run deploy:cloudrun:backend`
-- `npm run deploy:cloudrun:frontend`
+You can invoke the deploy helpers directly when the required environment variables are exported:
+
+```bash
+IMAGE_TAG=YOUR_IMAGE_TAG bash infra/cloud-run/deploy-backend-migration-job.sh
+IMAGE_TAG=YOUR_IMAGE_TAG bash infra/cloud-run/deploy-backend.sh
+IMAGE_TAG=YOUR_IMAGE_TAG bash infra/cloud-run/deploy-frontend.sh
+```
