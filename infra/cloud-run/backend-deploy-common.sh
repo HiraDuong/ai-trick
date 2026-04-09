@@ -92,7 +92,9 @@ build_backend_service_env_vars() {
 		env_vars+=("JWT_EXPIRES_IN=${BACKEND_JWT_EXPIRES_IN}")
 	fi
 
-	printf '%s' "$(IFS=,; echo "${env_vars[*]}")"
+	local joined
+	printf -v joined '##%s' "${env_vars[@]}"
+	printf '%s' "^##^${joined:2}"
 }
 
 build_backend_migration_env_vars() {
@@ -102,5 +104,7 @@ build_backend_migration_env_vars() {
 		env_vars+=("SHADOW_DATABASE_URL=${BACKEND_SHADOW_DATABASE_URL}")
 	fi
 
-	printf '%s' "$(IFS=,; echo "${env_vars[*]}")"
+	local joined
+	printf -v joined '##%s' "${env_vars[@]}"
+	printf '%s' "^##^${joined:2}"
 }
