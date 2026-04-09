@@ -200,7 +200,8 @@ deploy_frontend_cloudrun:
     - IMAGE_TAG="$CI_COMMIT_SHA" bash infra/cloud-run/deploy-frontend.sh
     - export FRONTEND_SERVICE_URL="$(gcloud run services describe "$CLOUD_RUN_FRONTEND_SERVICE" --region "$GCP_REGION" --format='value(status.url)')"
     - test -n "$FRONTEND_SERVICE_URL"
-    - 'export BACKEND_CORS_ORIGIN_LIST="${BACKEND_CORS_ORIGIN:-http://localhost:3000}"'
+    - 'export FRONTEND_CLOUD_RUN_ORIGIN_PATTERN="https://${CLOUD_RUN_FRONTEND_SERVICE}-*.${GCP_REGION}.run.app"'
+    - 'export BACKEND_CORS_ORIGIN_LIST="${BACKEND_CORS_ORIGIN:-http://localhost:3000,$FRONTEND_CLOUD_RUN_ORIGIN_PATTERN}"'
     - |
       case ",$BACKEND_CORS_ORIGIN_LIST," in
         *",$FRONTEND_SERVICE_URL,"*) ;;

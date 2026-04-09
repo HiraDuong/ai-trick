@@ -18,15 +18,36 @@ const app = express();
 
 const allowAllCorsOrigins = config.corsOrigins.includes("*");
 
+function matchesCorsOrigin(origin: string, allowedOrigin: string): boolean {
+  if (origin === allowedOrigin) {
+    return true;
+  }
+
+  if (!allowedOrigin.includes("*")) {
+    return false;
+  }
+
+  const escapedPattern = allowedOrigin
+    .replace(/[|\\{}()[\]^$+?.]/g, "\\$&")
+    .replace(/\*/g, ".*");
+
+  return new RegExp(`^${escapedPattern}$`).test(origin);
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowAllCorsOrigins || config.corsOrigins.includes(origin)) {
+      const isAllowedOrigin =
+        !origin ||
+        allowAllCorsOrigins ||
+        config.corsOrigins.some((allowedOrigin) => matchesCorsOrigin(origin, allowedOrigin));
+
+      if (isAllowedOrigin) {
         callback(null, true);
         return;
       }
 
-      callback(new Error("CORS origin not allowed"));
+      callback(null, false);
     },
   })
 );
