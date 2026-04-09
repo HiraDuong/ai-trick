@@ -14,7 +14,6 @@ stages:
   - build
   - test
   - docker
-  - migrate-backend
   - deploy-backend
   - docker-frontend
   - deploy-frontend
@@ -148,22 +147,10 @@ docker_backend_cloudrun:
         --dockerfile "$CI_PROJECT_DIR/apps/backend/Dockerfile" \
         --destination "$IMAGE_BE"
 
-migrate_backend_cloudrun:
-  stage: migrate-backend
-  image: node:20-bookworm-slim
-  <<: *npm_cache
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "production") && $GCP_PROJECT_ID && $GCP_REGION && $GCP_SERVICE_ACCOUNT_KEY && $BACKEND_DATABASE_URL'
-  needs: ["install"]
-  script:
-    - npm install
-    - DATABASE_URL="$BACKEND_DATABASE_URL" npm run prisma:migrate:deploy --workspace=backend
-
 deploy_backend_cloudrun:
   stage: deploy-backend
   extends: .cloud_run_gcp_auth
   needs:
-    - job: migrate_backend_cloudrun
     - job: docker_backend_cloudrun
   <<: *cloud_run_job_rules
   script:
