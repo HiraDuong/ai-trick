@@ -26,16 +26,24 @@ function readRequiredString(value: string | undefined, variableName: string): st
 function readDatabaseUrl(value: string | undefined, nodeEnv: string): string {
   const databaseUrl = readRequiredString(value, "DATABASE_URL");
 
+  if (!/^postgres(?:ql)?:\/\//.test(databaseUrl)) {
+    throw new Error("DATABASE_URL must use the postgres:// or postgresql:// scheme");
+  }
+
+  const queryIndex = databaseUrl.indexOf("?");
+  const query = queryIndex >= 0 ? databaseUrl.slice(queryIndex + 1) : "";
+  const socketHost = new URLSearchParams(query).get("host");
+
+  if (socketHost?.startsWith("/cloudsql/")) {
+    return databaseUrl;
+  }
+
   let parsedUrl: URL;
 
   try {
     parsedUrl = new URL(databaseUrl);
   } catch {
     throw new Error("DATABASE_URL must be a valid PostgreSQL connection string");
-  }
-
-  if (!["postgres:", "postgresql:"].includes(parsedUrl.protocol)) {
-    throw new Error("DATABASE_URL must use the postgres:// or postgresql:// scheme");
   }
 
   if (nodeEnv === "production" && parsedUrl.hostname === "db-host") {
