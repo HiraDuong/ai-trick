@@ -26,6 +26,9 @@ deploy_args=(
 	run jobs deploy "$BACKEND_MIGRATION_JOB"
 	--image "$BACKEND_IMAGE_URI"
 	--region "$GCP_REGION"
+	--tasks 1
+	--parallelism 1
+	--max-retries 0
 	--command npx
 	--args prisma,migrate,deploy
 )

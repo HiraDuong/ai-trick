@@ -78,6 +78,7 @@ Notes:
 - The GitLab variable `BACKEND_DATABASE_URL` is copied into the deployed backend service as `DATABASE_URL`.
 - If the pipeline prints `Using backend database host: ...` followed by a local or placeholder host, fix the GitLab CI/CD variable rather than the application code.
 - Backend schema migrations now run through a Cloud Run Job before the backend service deploys, so the HTTP container can bind `PORT=8080` immediately instead of blocking on `prisma migrate deploy` during startup.
+- The migration job is deployed with `--tasks 1 --parallelism 1 --max-retries 0` so Prisma migrations run once per pipeline execution without automatic retry fan-out.
 
 ## Frontend deploy variables
 
