@@ -9,6 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "start:cloudrun": "node dist/index.js",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "test:task26:be": "node --require ts-node/register/transpile-only src/scripts/ut-backend.ts",
     "test:task32:be": "node --require ts-node/register/transpile-only src/scripts/task32-validation.ts",
     "test:task34:be": "node --require ts-node/register/transpile-only src/scripts/task34-rbac-validation.ts",

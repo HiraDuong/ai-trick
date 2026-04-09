@@ -86,6 +86,8 @@ app.use(
   ) => {
     const { statusCode, message } = getErrorResponse(error);
 
+    console.error("Unhandled backend error", error);
+
     response.status(statusCode).json({
       success: false,
       error: {
