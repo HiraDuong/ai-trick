@@ -35,7 +35,7 @@ if [[ -n "$migration_service_account" ]]; then
 fi
 
 if [[ -n "$effective_cloudsql_instances" ]]; then
-	deploy_args+=(--add-cloudsql-instances "$effective_cloudsql_instances")
+	deploy_args+=(--set-cloudsql-instances "$effective_cloudsql_instances")
 fi
 
 if [[ -n "$migration_env_vars" ]]; then
