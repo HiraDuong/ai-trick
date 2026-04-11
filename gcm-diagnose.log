@@ -1,0 +1,215 @@
+﻿Diagnose log at 2026-04-08T21:05:03Z
+
+AppPath: C:\Program Files\Git\mingw64\bin\git-credential-manager.exe
+InstallDir: C:\Program Files\Git\mingw64\bin\
+Version: 2.7.3+5fa7116896c82164996a609accd1c5ad90fe730a
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+OneDriveConsumer=C:\Users\Admin\OneDrive
+ProgramFiles(x86)=C:\Program Files (x86)
+MSYSTEM=MINGW64
+CORS_ORIGIN=http://localhost:3000
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 165 Stepping 2, GenuineIntel
+TMP=C:\Users\Admin\AppData\Local\Temp
+JWT_EXPIRES_IN=7d
+VSCODE_GIT_ASKPASS_MAIN=c:\Users\Admin\AppData\Roaming\Code\User\globalStorage\vscode.git\askpass\493597c785d4c5cb\askpass-main.js
+Path=C:/Program Files/Git/mingw64/libexec/git-core;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\Admin\bin;c:\Users\Admin\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;c:\Users\Admin\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Cloudflare\Cloudflare WARP\;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Admin\AppData\Local\Microsoft\WindowsApps;C:\Users\Admin\AppData\Roaming\npm;C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Admin\AppData\Local\Python\bin;C:\Users\Admin\AppData\Local\Programs\Ollama;C:\Program Files\WinRAR;
+POSTGRES_PORT=5432
+HOMEPATH=\Users\Admin
+TERM_PROGRAM_VERSION=1.114.0
+POSTGRES_USER=postgres
+VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-f880a4e526-sock
+PROCESSOR_REVISION=a502
+TEMP=C:\Users\Admin\AppData\Local\Temp
+USERPROFILE=C:\Users\Admin
+ProgramW6432=C:\Program Files
+EFC_9068_1262719628=1
+TERM=xterm-256color
+USERNAME=Admin
+SystemRoot=C:\Windows
+CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_15296_PHRKFWCGHSJMCYNR
+GIT_EXEC_PATH=C:/Program Files/Git/mingw64/libexec/git-core
+EFC_9068_1592913036=1
+GIT_PAGER=cat
+OneDrive=C:\Users\Admin\OneDrive
+ALLUSERSPROFILE=C:\ProgramData
+POSTGRES_DB=ikp_db
+CommonProgramFiles=C:\Program Files\Common Files
+ZES_ENABLE_SYSMAN=1
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+EFC_9068_3789132940=1
+PROCESSOR_LEVEL=6
+PYTHON_BASIC_REPL=1
+ProgramData=C:\ProgramData
+LANG=en_US.UTF-8
+GIT_ASKPASS=c:\Users\Admin\AppData\Roaming\Code\User\globalStorage\vscode.git\askpass\493597c785d4c5cb\askpass.sh
+PLINK_PROTOCOL=ssh
+PYTHONSTARTUP=c:\Users\Admin\AppData\Roaming\Code\User\workspaceStorage\cfc4d8d1906940df0b384e120b2dffc2\ms-python.python\pythonrc.py
+VSCODE_INJECTION=1
+PORT=5000
+CommonProgramW6432=C:\Program Files\Common Files
+COLORTERM=truecolor
+JWT_SECRET=local-dev-secret-12345
+SHADOW_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ikp_shadow
+PROCESSOR_ARCHITECTURE=AMD64
+SESSIONNAME=Console
+DriverData=C:\Windows\System32\Drivers\DriverData
+HOMEDRIVE=C:
+POSTGRES_PASSWORD=postgres
+windir=C:\Windows
+GIT_TRACE2_PARENT_SID=5ce444a9-51d3-4ac2-84de-618b68678990
+SystemDrive=C:
+NUMBER_OF_PROCESSORS=12
+OS=Windows_NT
+GIT_MERGE_AUTOEDIT=no
+ProgramFiles=C:\Program Files
+ComSpec=C:\Windows\system32\cmd.exe
+USERDOMAIN_ROAMINGPROFILE=BE-DUONG-KAWAII
+GIT_EDITOR=:
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+HOME=C:\Users\Admin
+LOGONSERVER=\\BE-DUONG-KAWAII
+FRONTEND_PORT=3000
+PSModulePath=C:\Users\Admin\Documents\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+TMPDIR=C:\Users\Admin\AppData\Local\Temp
+APPDATA=C:\Users\Admin\AppData\Roaming
+USERDOMAIN=BE-DUONG-KAWAII
+COMPUTERNAME=BE-DUONG-KAWAII
+LOCALAPPDATA=C:\Users\Admin\AppData\Local
+EFC_9068_2283032206=1
+VSCODE_GIT_ASKPASS_NODE=C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code\Code.exe
+API_BASE_URL=http://localhost:5000/api
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ikp_db
+EFC_9068_2775293581=1
+PUBLIC=C:\Users\Public
+TERM_PROGRAM=vscode
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\Admin\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\Admin\AppData\Local\Temp\79d342d3a45ece2c9e0cd555'... OK
+Reading from temporary file 'C:\Users\Admin\AppData\Local\Temp\79d342d3a45ece2c9e0cd555'... OK
+Deleting temporary file 'C:\Users\Admin\AppData\Local\Temp\79d342d3a45ece2c9e0cd555'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\Admin
+UserDataDirectoryPath: C:\Users\Admin\.gcm
+GetCurrentDirectory(): E:\code\hackathon
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:57026/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+ OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.53.0.windows.2'
+Locating current repository...Git repository at 'E:/code/hackathon/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Program Files/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Program Files/Git/etc/gitconfig	core.autocrlf=true
+file:C:/Program Files/Git/etc/gitconfig	core.fscache=true
+file:C:/Program Files/Git/etc/gitconfig	core.symlinks=false
+file:C:/Program Files/Git/etc/gitconfig	pull.rebase=false
+file:C:/Program Files/Git/etc/gitconfig	credential.helper=manager
+file:C:/Program Files/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Program Files/Git/etc/gitconfig	init.defaultbranch=master
+file:C:/Users/Admin/.gitconfig	user.name=Hira
+file:C:/Users/Admin/.gitconfig	user.email=hirakuminamoto@yahoo.com
+file:C:/Users/Admin/.gitconfig	credential.https://git.luvina.net.provider=generic
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	remote.gitlab-public.url=https://gitlab.com/luv-hackathon/internal-knowledge-platform.git
+file:.git/config	remote.gitlab-public.fetch=+refs/heads/*:refs/remotes/gitlab-public/*
+file:.git/config	remote.github.url=https://github.com/HiraDuong/ai-trick.git
+file:.git/config	remote.github.fetch=+refs/heads/*:refs/remotes/github/*
+file:.git/config	branch.main.remote=github
+file:.git/config	branch.main.merge=refs/heads/main
+file:.git/config	branch.main.vscode-merge-base=gitlab-public/main
+file:.git/config	branch.copilot/article-actions-docs-polish.remote=https://git.luvina.net/hackathon/ai-no-trick/internal-knowledge-platform.git
+file:.git/config	branch.copilot/article-actions-docs-polish.merge=refs/heads/copilot/article-actions-docs-polish
+file:.git/config	branch.copilot/article-actions-docs-polish.vscode-merge-base=gitlab-public/main
+file:.git/config	branch.feature/cloud-run-pipeline.vscode-merge-base=gitlab-public/main
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\Admin\AppData\Local\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\Admin\AppData\Local\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+

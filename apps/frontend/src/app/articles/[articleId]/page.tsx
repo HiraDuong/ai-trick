@@ -64,7 +64,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       helpfulnessResult={helpfulnessResult}
       statsResult={statsResult}
       reactionsResult={reactionsResult}
-      currentUser={currentUser}
+      currentUserId={currentUser?.id}
+      currentUserRole={currentUser?.role}
     />
   );
 }

@@ -117,13 +117,23 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
     setMessage(null);
     setErrorMessage(null);
 
+    // Merge any pending tag input before reading tags state
+    const pendingTag = form.getValues("tagsInput").trim().replace(/^#/, "");
+    const effectiveTags = pendingTag && !tags.includes(pendingTag)
+      ? [...tags, pendingTag]
+      : [...tags];
+    if (pendingTag) {
+      setTags(effectiveTags);
+      form.setValue("tagsInput", "");
+    }
+
     const values = form.getValues();
     const payload = {
       title: values.title,
       categoryId: values.categoryId,
       content: values.content,
       status,
-      tags,
+      tags: effectiveTags,
     };
 
     const path = mode === "create" ? "/articles" : `/articles/${articleId}`;
@@ -257,10 +267,17 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
 
             {mode === "edit" && articleId ? <ArticleVersionHistoryPanel articleId={articleId} /> : null}
 
+            {form.formState.errors.title ? (
+              <p className="text-sm text-[var(--color-danger)]">Title is required (minimum 3 characters).</p>
+            ) : null}
+            {form.formState.errors.content ? (
+              <p className="text-sm text-[var(--color-danger)]">Content is required.</p>
+            ) : null}
+
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => void submit("DRAFT")}
+                onClick={() => void form.handleSubmit(() => submit("DRAFT"))()}
                 disabled={isSubmitting}
                 className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] disabled:opacity-60"
               >
@@ -268,7 +285,7 @@ export function ArticleForm({ mode, categories, articleId }: ArticleFormProps) {
               </button>
               <button
                 type="button"
-                onClick={() => void submit("PUBLISHED")}
+                onClick={() => void form.handleSubmit(() => submit("PUBLISHED"))()}
                 disabled={isSubmitting}
                 className="rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-[var(--color-accent-contrast)] disabled:opacity-60"
               >

@@ -10,8 +10,6 @@
     "dev:runner": "node ./scripts/dev-runner.mjs",
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
-    "deploy:cloudrun:backend": "bash ./infra/cloud-run/deploy-backend.sh",
-    "deploy:cloudrun:frontend": "bash ./infra/cloud-run/deploy-frontend.sh",
     "db:up": "docker compose -f infra/docker-compose.postgres.yml up -d",
     "db:down": "docker compose -f infra/docker-compose.postgres.yml down",
     "db:logs": "docker compose -f infra/docker-compose.postgres.yml logs -f postgres",

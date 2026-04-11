@@ -1,0 +1,141 @@
+Bug 8: frontend interaction and authorization bugs (multi-issue pass)
+
+Scope
+- Article detail page (article-detail-view.tsx)
+- Article create/edit form (article-form.tsx)
+- Header navigation (main-layout.tsx)
+- Bookmarks page (bookmarks-view.tsx)
+- Version history panel (article-version-history-panel.tsx)
+
+--- Issue 8a (Critical): Engagement panel hidden by hardcoded title ---
+
+Observed issue
+- shouldRenderEngagementPanel() hid the entire engagement section (comments, helpfulness, reactions, stats) when article title exactly matched "Building a reliable knowledge-sharing workflow".
+
+Expected behavior
+- Engagement panel rendering should depend on permission or configuration, not on article title content.
+
+Actual behavior
+- Creating or renaming an article to that exact title caused comments, helpfulness, and stats to disappear completely.
+
+Fix applied
+- Removed shouldRenderEngagementPanel() function and the title-based conditional.
+- Engagement panel now always renders for all articles.
+
+Affected file
+- apps/frontend/src/components/articles/article-detail-view.tsx
+
+--- Issue 8b (High): Edit/Delete buttons visible to unauthorized users ---
+
+Observed issue
+- Edit article and Delete article buttons rendered unconditionally for all visitors, including anonymous users and viewers without edit permission.
+
+Expected behavior
+- Only the article owner or users with EDITOR role should see Edit and Delete controls.
+
+Actual behavior
+- Controls were visible to everyone; clicking them led to redirect or error flows.
+
+Fix applied
+- Added currentUserId and currentUserRole props to ArticleDetailView.
+- Gated Edit/Delete rendering behind canEdit check (currentUserId === article.author.id || currentUserRole === "EDITOR").
+- Updated article detail page to fetch and pass the current user from server-side auth.
+
+Affected files
+- apps/frontend/src/components/articles/article-detail-view.tsx
+- apps/frontend/src/app/articles/[articleId]/page.tsx
+
+--- Issue 8c (Medium): Tag input race condition with submit ---
+
+Observed issue
+- If a user typed a tag and immediately clicked Publish or Save draft without pressing Enter first, the last typed tag could be dropped from the request payload.
+
+Expected behavior
+- Any text in the tag input field should be included as a tag when submitting.
+
+Actual behavior
+- onBlur committed the tag via async state update, but submit() read the stale tags state before the update propagated.
+
+Fix applied
+- submit() now reads tagsInput directly, merges any pending tag into an effectiveTags array, and sends that array in the request payload.
+
+Affected file
+- apps/frontend/src/components/articles/article-form.tsx
+
+--- Issue 8d (Medium): Form validation bypass on submit ---
+
+Observed issue
+- Submit buttons used type="button" and called submit() directly with form.getValues(), bypassing react-hook-form validation rules declared on inputs (required, minLength).
+
+Expected behavior
+- Client-side validation errors should appear before any API call is made.
+
+Actual behavior
+- Invalid payloads could be sent to the backend; users only saw server-side error responses.
+
+Fix applied
+- Submit buttons now call form.handleSubmit(() => submit(status))() to trigger validation.
+- Added inline validation error messages for title and content fields.
+
+Affected file
+- apps/frontend/src/components/articles/article-form.tsx
+
+--- Issue 8e (Medium): Header nav always highlights Open archive ---
+
+Observed issue
+- The header primary navigation in main-layout.tsx used hardcoded styles that always showed Open archive as the active link, regardless of current route.
+
+Expected behavior
+- The nav link matching the current route should be highlighted; others should remain visually quieter.
+
+Actual behavior
+- Navigating to /bookmarks or /studio still showed Open archive with the active accent style.
+
+Fix applied
+- Integrated the route-aware HeaderPrimaryNav client component (already created but not wired up) into main-layout.tsx, replacing the hardcoded nav links.
+
+Affected file
+- apps/frontend/src/components/layout/main-layout.tsx
+
+--- Issue 8f (Medium): Bookmark previews show raw HTML ---
+
+Observed issue
+- Bookmark excerpt text on /bookmarks could display raw HTML tags instead of clean readable text.
+
+Expected behavior
+- Bookmark cards should show plain text previews with HTML stripped.
+
+Actual behavior
+- Tags like <p>, <strong>, etc. appeared as visible text in the excerpt.
+
+Fix applied
+- Applied toPlainTextPreview() from content-preview.ts to strip HTML tags and decode entities before rendering bookmark excerpts.
+
+Affected file
+- apps/frontend/src/components/bookmarks/bookmarks-view.tsx
+
+--- Issue 8g (Build-breaking): Empty version history panel module ---
+
+Observed issue
+- article-version-history-panel.tsx was an empty file (0 bytes), causing build failure: "Export ArticleVersionHistoryPanel doesn't exist in target module".
+
+Expected behavior
+- The file should export the ArticleVersionHistoryPanel component used by article-form.tsx.
+
+Actual behavior
+- Frontend build failed because the import resolved to an empty module with no exports.
+
+Fix applied
+- Restored the file content from git history (commit c7bd471).
+
+Affected file
+- apps/frontend/src/components/articles/article-version-history-panel.tsx
+
+Validation target
+- Engagement panel renders for all articles regardless of title.
+- Edit/Delete buttons only appear for article owner or EDITOR role users.
+- Typing a tag and clicking Publish immediately includes the tag.
+- Clicking Publish with empty title shows client-side validation error.
+- /bookmarks highlights Bookmarks in header nav, not Open archive.
+- Bookmark cards show clean text previews without HTML tags.
+- Frontend build passes without module errors.
