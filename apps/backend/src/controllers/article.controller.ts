@@ -6,20 +6,27 @@ import {
   deleteArticle as deleteArticleService,
   getArticleDetail,
   getArticleList,
+  getArticleVersions,
   publishArticle,
   unpublishArticle,
   updateArticle as updateArticleService,
 } from "../services/article.service";
 import type { ApiSuccessResponse } from "../types/api.types";
+import type { AuthenticatedUser } from "../types/auth.types";
 import type {
   ArticleDetailDto,
   ArticleListQueryDto,
   ArticleListResponseDto,
   ArticleRouteParamsDto,
+  ArticleVersionListResponseDto,
   CreateArticleRequestDto,
   DeleteArticleResponseDto,
   UpdateArticleRequestDto,
 } from "../types/article.types";
+
+function readRequestUser(request: unknown): AuthenticatedUser | undefined {
+  return (request as Request & { user?: AuthenticatedUser }).user;
+}
 
 function readForwardedFor(headerValue: string | string[] | undefined): string | undefined {
   if (Array.isArray(headerValue)) {
@@ -34,8 +41,9 @@ function readForwardedFor(headerValue: string | string[] | undefined): string | 
 }
 
 function getViewerSessionKey(request: Request): string | undefined {
-  if (request.user) {
-    return `user:${request.user.id}`;
+  const user = readRequestUser(request);
+  if (user) {
+    return `user:${user.id}`;
   }
 
   const cookieHeader = request.headers.cookie;
@@ -61,7 +69,7 @@ export async function createArticle(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await createArticleService(request.body, request.user);
+    const result = await createArticleService(request.body, readRequestUser(request));
     response.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -74,7 +82,7 @@ export async function updateArticle(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await updateArticleService(request.params.articleId, request.body, request.user);
+    const result = await updateArticleService(request.params.articleId, request.body, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -87,7 +95,7 @@ export async function deleteArticle(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await deleteArticleService(request.params.articleId, request.user);
+    const result = await deleteArticleService(request.params.articleId, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -100,7 +108,7 @@ export async function publishArticleController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await publishArticle(request.params.articleId, request.user);
+    const result = await publishArticle(request.params.articleId, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -113,7 +121,7 @@ export async function unpublishArticleController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await unpublishArticle(request.params.articleId, request.user);
+    const result = await unpublishArticle(request.params.articleId, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -126,7 +134,7 @@ export async function getArticleDetailController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await getArticleDetail(request.params.articleId, request.user, getViewerSessionKey(request));
+    const result = await getArticleDetail(request.params.articleId, readRequestUser(request), getViewerSessionKey(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
@@ -139,7 +147,20 @@ export async function getArticleListController(
   next: NextFunction
 ): Promise<void> {
   try {
-    const result = await getArticleList(request.query, request.user);
+    const result = await getArticleList(request.query, readRequestUser(request));
+    response.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getArticleVersionsController(
+  request: Request<ArticleRouteParamsDto>,
+  response: Response<ApiSuccessResponse<ArticleVersionListResponseDto>>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const result = await getArticleVersions(request.params.articleId, readRequestUser(request));
     response.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

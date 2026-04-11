@@ -10,6 +10,9 @@ interface SearchResultCardProps {
 }
 
 export function SearchResultCard({ item }: SearchResultCardProps) {
+  const excerpt = typeof item.excerpt === "string" ? item.excerpt : "";
+  const highlightTerms = Array.isArray(item.highlightTerms) ? item.highlightTerms : [];
+
   return (
     <article className="rounded-[2rem] border border-[var(--color-line)] bg-[var(--color-surface)]/95 p-6 shadow-[0_20px_60px_rgba(33,37,41,0.08)]">
       <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
@@ -27,10 +30,10 @@ export function SearchResultCard({ item }: SearchResultCardProps) {
         <span>{formatArticleDate(item.publishedAt ?? item.createdAt)}</span>
         <span>{formatViewCount(item.views)}</span>
       </div>
-      <p className="mt-5 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{item.excerpt}</p>
-      {item.highlightTerms.length > 0 ? (
+      <p className="mt-5 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{excerpt}</p>
+      {highlightTerms.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          {item.highlightTerms.map((term) => (
+          {highlightTerms.map((term) => (
             <span
               key={term}
               className="rounded-full border border-[color:color-mix(in_srgb,var(--color-accent)_26%,white)] bg-[color:color-mix(in_srgb,var(--color-accent)_8%,white)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-accent)]"

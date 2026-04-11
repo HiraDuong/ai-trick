@@ -4,8 +4,10 @@ import {
   findPublishedArticleIdsByTagId,
   findSearchArticlesByIds,
   findTagById,
+  findTagByName,
   searchPublishedArticleIds,
   type SearchArticleRecord,
+  type SearchTagRecord,
 } from "../repositories/search.repository";
 import type { SearchArticleItemDto, SearchArticlesQueryDto, SearchArticlesResponseDto } from "../types/search.types";
 import { buildExcerpt } from "../utils/content.utils";
@@ -16,6 +18,7 @@ interface ValidatedSearchQuery {
   query: string;
   normalizedQuery: string;
   tagId: string | null;
+  tagName: string | null;
   limit: number;
   skip: number;
 }
@@ -36,7 +39,6 @@ function readOptionalString(value: unknown, fieldName: string): string | null {
   if (typeof value === "undefined") {
     return null;
   }
-
   if (typeof value !== "string") {
     throw createHttpError(400, `${fieldName} must be a string`);
   }
@@ -47,11 +49,12 @@ function readOptionalString(value: unknown, fieldName: string): string | null {
 function validateSearchQuery(query: SearchArticlesQueryDto): ValidatedSearchQuery {
   const keyword = readOptionalString(query.q, "Query");
   const tagId = readOptionalString(query.tagId, "Tag id");
+  const tagName = readOptionalString(query.tag, "Tag");
   const limit = Number.parseInt(query.limit ?? "10", 10);
   const skip = Number.parseInt(query.skip ?? "0", 10);
 
-  if (!keyword && !tagId) {
-    throw createHttpError(400, "Query or tag id is required");
+  if (!keyword && !tagId && !tagName) {
+    throw createHttpError(400, "Query, tag id, or tag is required");
   }
   if (keyword && (keyword.length < 2 || keyword.length > 100)) {
     throw createHttpError(400, "Query must be between 2 and 100 characters long");
@@ -66,10 +69,21 @@ function validateSearchQuery(query: SearchArticlesQueryDto): ValidatedSearchQuer
   return {
     query: keyword ?? "",
     normalizedQuery: keyword ? normalizeTagInput(keyword) : "",
-    tagId,
+    tagId: tagId ?? null,
+    tagName: tagName ? normalizeTagInput(tagName) : null,
     limit,
     skip,
   };
+}
+
+async function resolveTag(tagId: string | null, tagName: string | null): Promise<SearchTagRecord | null> {
+  if (tagId) {
+    return findTagById(tagId);
+  }
+  if (tagName) {
+    return findTagByName(tagName);
+  }
+  return null;
 }
 
 function mapSearchArticle(article: SearchArticleRecord, score: number, query: string): SearchArticleItemDto {
@@ -93,18 +107,21 @@ function mapSearchArticle(article: SearchArticleRecord, score: number, query: st
 
 export async function searchArticles(query: SearchArticlesQueryDto): Promise<SearchArticlesResponseDto> {
   const validatedQuery = validateSearchQuery(query);
-  console.info(
-    `[search] incoming query="${validatedQuery.query}" normalized="${validatedQuery.normalizedQuery}" tagId="${validatedQuery.tagId ?? ""}"`
-  );
+  const tag = await resolveTag(validatedQuery.tagId, validatedQuery.tagName);
 
-  const tag = validatedQuery.tagId ? await findTagById(validatedQuery.tagId) : null;
-  if (validatedQuery.tagId && !tag) {
+  if ((validatedQuery.tagId || validatedQuery.tagName) && !tag) {
     throw createHttpError(404, "Tag not found");
   }
 
-  const { rows, total } = validatedQuery.tagId
-    ? await findPublishedArticleIdsByTagId(validatedQuery.tagId, validatedQuery.skip, validatedQuery.limit + 1)
-    : await searchPublishedArticleIds(validatedQuery.query, validatedQuery.normalizedQuery, validatedQuery.skip, validatedQuery.limit + 1);
+  const { rows, total } =
+    tag && !validatedQuery.query
+      ? await findPublishedArticleIdsByTagId(tag.id, validatedQuery.skip, validatedQuery.limit + 1)
+      : await searchPublishedArticleIds(
+          validatedQuery.query,
+          validatedQuery.normalizedQuery,
+          validatedQuery.skip,
+          validatedQuery.limit + 1
+        );
 
   const hasMore = rows.length > validatedQuery.limit;
   const visibleRows = hasMore ? rows.slice(0, validatedQuery.limit) : rows;
@@ -122,8 +139,6 @@ export async function searchArticles(query: SearchArticlesQueryDto): Promise<Sea
       return mapSearchArticle(article, row.score, validatedQuery.query);
     })
     .filter((item): item is SearchArticleItemDto => item !== null);
-
-  console.info(`[search] matched ${items.length} visible articles (${total} total)`);
 
   return {
     query: validatedQuery.query,

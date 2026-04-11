@@ -142,6 +142,14 @@ export default async function Home() {
           </section>
         ) : null}
       </div>
+      <Link
+        href="/articles/new"
+        aria-label="Create new article"
+        title="Create post"
+        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent)] text-3xl font-semibold text-[var(--color-accent-contrast)] shadow-[0_18px_40px_rgba(33,37,41,0.22)] transition-colors duration-200 hover:bg-[var(--color-accent-strong)]"
+      >
+        +
+      </Link>
     </main>
   );
 }

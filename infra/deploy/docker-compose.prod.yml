@@ -1,0 +1,48 @@
+# Đặt trên server (ví dụ /opt/ikp/docker-compose.prod.yml).
+# Biến BACKEND_IMAGE, FRONTEND_IMAGE, IMAGE_TAG do script deploy export.
+# File .env trên server chứa secret (POSTGRES_*, DATABASE_URL, NEXT_PUBLIC_API_URL).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ikp-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ikp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ikp}
+    volumes:
+      - ikp_pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${BACKEND_IMAGE:?}:${IMAGE_TAG:?}
+    container_name: ikp-backend-prod
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?}:${IMAGE_TAG:?}
+    container_name: ikp-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+volumes:
+  ikp_pgdata_prod:

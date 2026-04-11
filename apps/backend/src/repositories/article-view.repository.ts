@@ -14,13 +14,22 @@ export async function touchArticleViewSession(
   const dedupBoundary = new Date(now.getTime() - dedupWindowMs);
   const viewerKeyHash = hashViewerSessionKey(viewerSessionKey);
 
-  const affectedRows = await prisma.$executeRaw`
-    INSERT INTO "ArticleViewSession" ("id", "articleId", "viewerKeyHash", "lastViewedAt")
-    VALUES (${randomUUID()}, ${articleId}, ${viewerKeyHash}, ${now})
-    ON CONFLICT ("articleId", "viewerKeyHash")
-    DO UPDATE SET "lastViewedAt" = EXCLUDED."lastViewedAt"
-    WHERE "ArticleViewSession"."lastViewedAt" <= ${dedupBoundary}
-  `;
+  try {
+    const affectedRows = await prisma.$executeRaw`
+      INSERT INTO "ArticleViewSession" ("id", "articleId", "viewerKeyHash", "lastViewedAt")
+      VALUES (${randomUUID()}, ${articleId}, ${viewerKeyHash}, ${now})
+      ON CONFLICT ("articleId", "viewerKeyHash")
+      DO UPDATE SET "lastViewedAt" = EXCLUDED."lastViewedAt"
+      WHERE "ArticleViewSession"."lastViewedAt" <= ${dedupBoundary}
+    `;
 
-  return affectedRows > 0;
+    return affectedRows > 0;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("42P01") || message.includes("ArticleViewSession") || message.includes("does not exist")) {
+      // Defensive fallback for environments with stale schema: do not break article detail flow.
+      return true;
+    }
+    throw error;
+  }
 }

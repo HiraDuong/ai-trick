@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { BookmarkListItemDto } from "@/lib/api-types";
 import { fetchAuthenticatedApi, getStoredAccessToken, subscribeToAuthTokenChanges } from "@/lib/auth";
+import { toPlainTextPreview } from "@/lib/content-preview";
 import { formatArticleDate } from "@/lib/format";
 
 export function BookmarksView() {
@@ -74,7 +75,7 @@ export function BookmarksView() {
                 >
                   {bookmark.title}
                 </Link>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{bookmark.excerpt}</p>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)]">{toPlainTextPreview(bookmark.excerpt ?? "")}</p>
               </article>
             ))}
           </section>

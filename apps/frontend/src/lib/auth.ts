@@ -152,6 +152,46 @@ export async function loginWithCredentials(email: string, password: string): Pro
   }
 }
 
+export async function registerWithCredentials(
+  name: string,
+  email: string,
+  password: string
+): Promise<ApiResult<AuthResponseDto>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | ApiSuccessResponse<AuthResponseDto>
+      | ApiErrorResponse
+      | null;
+
+    if (!response.ok || !payload || !("data" in payload)) {
+      return {
+        ok: false,
+        status: response.status,
+        message: readApiErrorMessage(payload, "Unable to register right now"),
+      };
+    }
+
+    return {
+      ok: true,
+      data: payload.data,
+    };
+  } catch {
+    return {
+      ok: false,
+      status: 503,
+      message: "Frontend could not connect to the backend API",
+    };
+  }
+}
+
 export async function fetchAuthenticatedApi<T>(path: string, init?: RequestInit): Promise<ApiResult<T>> {
   const token = getStoredAccessToken();
   if (!token) {

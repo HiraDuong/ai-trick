@@ -136,6 +136,13 @@ export async function findTagById(tagId: string): Promise<SearchTagRecord | null
   });
 }
 
+export async function findTagByName(normalizedName: string): Promise<SearchTagRecord | null> {
+  return prisma.tag.findFirst({
+    where: { name: { equals: normalizedName, mode: "insensitive" } },
+    select: searchTagSelect,
+  });
+}
+
 export async function findPublishedArticleIdsByTagId(
   tagId: string,
   skip: number,

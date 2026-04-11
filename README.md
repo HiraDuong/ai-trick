@@ -2,19 +2,19 @@
 
 ## Unified Development Startup
 
-The workspace now supports a single-command development startup from the repository root.
+The workspace supports single-command development startup from repository root.
 
 ### Prerequisites
 
 - Node.js and npm
-- Docker Desktop or another Docker engine with `docker compose`
+- Docker Desktop (or Docker engine with `docker compose`)
 
 ### Environment Configuration
 
 The root `.env` file is the source of truth for local startup.
 
-1. If `.env` does not exist, the startup script creates it from `/.env.example`.
-2. Update the values in `/.env` when you need custom ports, database credentials, or auth settings.
+1. If `.env` does not exist, startup scripts create it from `.env.example`.
+2. Update values in `.env` for custom ports, credentials, and auth settings.
 
 Important variables:
 
@@ -28,7 +28,7 @@ Important variables:
 - `API_BASE_URL`
 - `CORS_ORIGIN`
 
-### Run Everything With One Command
+### Run Everything
 
 Unix-like shells:
 
@@ -42,18 +42,18 @@ Windows PowerShell:
 npm run dev:windows
 ```
 
-### What The Unified Startup Does
+### Startup Workflow
 
-1. Starts PostgreSQL with `docker compose up -d` from [infra/docker-compose.yml](infra/docker-compose.yml)
-2. Waits for the database port to accept connections
-3. Starts the backend
-4. Waits for the backend port to accept connections
-5. Starts the frontend
+1. Starts PostgreSQL using `docker compose up -d` from `infra/docker-compose.yml`
+2. Waits for database port readiness
+3. Starts backend
+4. Waits for backend port readiness
+5. Starts frontend
 6. Streams prefixed logs for both services in one terminal
 7. Stops child processes cleanly on `Ctrl+C`
 
 ### Notes
 
-- The unified backend startup uses the transpile-only TypeScript runtime script so existing unrelated type-check issues do not block local development.
-- The frontend is served on `http://localhost:3000` by default.
-- The backend API is served on `http://localhost:5000` by default.
+- Unified backend startup uses transpile-only TypeScript runtime so unrelated type-check issues do not block local dev.
+- Frontend defaults to `http://localhost:3000`.
+- Backend defaults to `http://localhost:5000`.

@@ -25,7 +25,9 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const resolvedSearchParams = await searchParams;
   const skip = parseInteger(resolvedSearchParams.skip, 0);
   const limit = Math.min(Math.max(parseInteger(resolvedSearchParams.limit, 6), 1), 12);
-  const result = await fetchPublishedArticles(skip, limit);
+  const categoryId = typeof resolvedSearchParams.categoryId === "string" ? resolvedSearchParams.categoryId.trim() : "";
+  const categoryName = typeof resolvedSearchParams.categoryName === "string" ? resolvedSearchParams.categoryName.trim() : "";
+  const result = await fetchPublishedArticles(skip, limit, { categoryId: categoryId || undefined });
 
   return (
     <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">
@@ -43,6 +45,11 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 This page is wired directly to the backend article APIs. It shows live published content,
                 real pagination, and links through to the full optimized article detail experience.
               </p>
+              {categoryId ? (
+                <p className="inline-flex w-fit rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)]">
+                  Category filter: {categoryName || categoryId}
+                </p>
+              ) : null}
             </div>
 
             <Link

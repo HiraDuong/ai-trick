@@ -1,0 +1,54 @@
+<task id="fix-bookmarks-nav-active-and-preview-rendering">
+
+  <context>
+    <description>
+      The bookmarks route exposed multiple frontend clarity issues: the header nav still showed Open archive as active,
+      bookmark previews could surface raw HTML tags, and version labels were not presented consistently as numeric versions.
+    </description>
+  </context>
+
+  <problem>
+    <summary>
+      The bookmarks and version interfaces provide misleading visual feedback and noisy content rendering.
+    </summary>
+
+    <details>
+      <issue>Header primary navigation used a hard-coded active style for Open archive instead of the current route.</issue>
+      <issue>Bookmark excerpts could render raw HTML markup as text noise.</issue>
+      <issue>Version history lacked explicit numeric version labels.</issue>
+    </details>
+  </problem>
+
+  <tasks>
+    <task>
+      <title>Fix route-aware header active state</title>
+      <requirements>
+        <requirement>Highlight the current primary route instead of hard-coding Open archive</requirement>
+        <requirement>Keep inactive links visually quieter than the active route</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Clean bookmark preview content</title>
+      <requirements>
+        <requirement>Strip raw HTML tags from bookmark excerpts</requirement>
+        <requirement>Show clean preview text on /bookmarks</requirement>
+      </requirements>
+    </task>
+
+    <task>
+      <title>Normalize version labels</title>
+      <requirements>
+        <requirement>Show version labels as numbers</requirement>
+        <requirement>Apply the same version-number convention in version history surfaces</requirement>
+      </requirements>
+    </task>
+  </tasks>
+
+  <acceptance_criteria>
+    <criteria>/bookmarks highlights Bookmarks instead of Open archive</criteria>
+    <criteria>Bookmark previews show readable text instead of raw HTML markup</criteria>
+    <criteria>Version history uses numeric labels such as Version 1, Version 2, Version 3</criteria>
+  </acceptance_criteria>
+
+</task>

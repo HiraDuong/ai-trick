@@ -1,0 +1,89 @@
+<task id="frontend-css-ui-comprehensive-check">
+  <role>
+    You are a senior frontend engineer and UI/UX quality expert specializing in CSS, layout, and interaction behavior.
+  </role>
+
+  <objective>
+    Audit the entire frontend codebase to detect and fix all common CSS and UI-related issues that affect user experience, visual consistency, and interaction behavior.
+  </objective>
+
+  <scope>
+    <review>
+      Review all components, pages, layouts, and shared UI elements.
+    </review>
+
+    <css_and_ui_issues_to_check>
+
+      <!-- Interaction -->
+      <issue>Missing or incorrect cursor styles (e.g. buttons not showing pointer cursor)</issue>
+      <issue>Hover states not working or inconsistent</issue>
+      <issue>Active / pressed states missing</issue>
+      <issue>Focus states not visible or not accessible</issue>
+      <issue>Disabled state not visually clear</issue>
+
+      <!-- Layout -->
+      <issue>Misaligned elements (flex/grid issues)</issue>
+      <issue>Broken spacing (margin/padding inconsistencies)</issue>
+      <issue>Incorrect alignment of text, buttons, inputs</issue>
+      <issue>Overflow causing layout breaking or hidden content</issue>
+      <issue>Unintended scrollbars or missing scroll behavior</issue>
+
+      <!-- Responsive -->
+      <issue>Layout not adapting to mobile/tablet/desktop</issue>
+      <issue>Elements overlapping on smaller screens</issue>
+      <issue>Text or components too small/large on certain breakpoints</issue>
+
+      <!-- Typography -->
+      <issue>Inconsistent font sizes, weights, or line heights</issue>
+      <issue>Text truncation or wrapping issues</issue>
+      <issue>Poor readability due to spacing or contrast</issue>
+
+      <!-- Visual -->
+      <issue>Color contrast issues (low readability)</issue>
+      <issue>Inconsistent color usage across components</issue>
+      <issue>Incorrect or missing theming support (dark/light if applicable)</issue>
+
+      <!-- Z-index / Layering -->
+      <issue>Dropdowns, modals, tooltips hidden behind elements</issue>
+      <issue>Z-index conflicts causing layering issues</issue>
+
+      <!-- Forms -->
+      <issue>Input focus styles missing</issue>
+      <issue>Validation messages not visible or unclear</issue>
+      <issue>Improper input spacing or alignment</issue>
+
+      <!-- Accessibility -->
+      <issue>Missing ARIA attributes where needed</issue>
+      <issue>Keyboard navigation not working properly</issue>
+      <issue>Focus not trapped in modals</issue>
+
+      <!-- States -->
+      <issue>Missing loading states</issue>
+      <issue>Missing empty states</issue>
+      <issue>Missing error states</issue>
+
+    </css_and_ui_issues_to_check>
+  </scope>
+
+  <requirements>
+    <requirement>Fix all identified issues directly in the source code</requirement>
+    <requirement>Do not only report problems; apply corrections</requirement>
+    <requirement>Do not introduce new libraries unless absolutely necessary</requirement>
+    <requirement>Follow existing CSS / Tailwind / design system conventions</requirement>
+    <requirement>Ensure consistent UI behavior across all pages and components</requirement>
+    <requirement>Preserve existing business logic; only modify UI/UX and styling</requirement>
+  </requirements>
+
+  <validation>
+    <step>Re-scan the entire codebase after fixes</step>
+    <step>Ensure cursor, hover, focus, and interaction states work correctly</step>
+    <step>Verify responsive behavior across breakpoints</step>
+    <step>Ensure no layout breaking, overlap, or visual glitches remain</step>
+    <step>Confirm accessibility and usability improvements</step>
+  </validation>
+
+  <output>
+    <instruction>Apply fixes directly to the codebase</instruction>
+    <instruction>Provide a summary of all issues found and fixes applied</instruction>
+  </output>
+</task>

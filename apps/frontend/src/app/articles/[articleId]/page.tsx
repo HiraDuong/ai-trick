@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleDetailView } from "@/components/articles/article-detail-view";
 import { fetchArticleComments, fetchArticleDetail, fetchArticleHelpfulness, fetchArticleReactions, fetchArticleStats } from "@/lib/api";
+import { fetchServerCurrentUser } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +49,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     );
   }
 
-  const [commentsResult, helpfulnessResult, statsResult, reactionsResult] = await Promise.all([
+  const [commentsResult, helpfulnessResult, statsResult, reactionsResult, currentUser] = await Promise.all([
     fetchArticleComments(articleId),
     fetchArticleHelpfulness(articleId),
     fetchArticleStats(articleId),
     fetchArticleReactions(articleId),
+    fetchServerCurrentUser(),
   ]);
 
   return (
@@ -62,6 +64,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       helpfulnessResult={helpfulnessResult}
       statsResult={statsResult}
       reactionsResult={reactionsResult}
+      currentUserId={currentUser?.id}
+      currentUserRole={currentUser?.role}
     />
   );
 }

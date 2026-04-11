@@ -76,8 +76,20 @@ async function fetchApi<T>(path: string): Promise<ApiResult<T>> {
   }
 }
 
-export async function fetchPublishedArticles(skip: number, limit: number): Promise<ApiResult<ArticleListResponseDto>> {
-  return fetchApi<ArticleListResponseDto>(`/articles?skip=${skip}&limit=${limit}`);
+export async function fetchPublishedArticles(
+  skip: number,
+  limit: number,
+  options?: { categoryId?: string }
+): Promise<ApiResult<ArticleListResponseDto>> {
+  const params = new URLSearchParams({
+    skip: String(skip),
+    limit: String(limit),
+  });
+  if (options?.categoryId) {
+    params.set("categoryId", options.categoryId);
+  }
+
+  return fetchApi<ArticleListResponseDto>(`/articles?${params.toString()}`);
 }
 
 export async function fetchArticleDetail(articleId: string): Promise<ApiResult<ArticleDetailDto>> {

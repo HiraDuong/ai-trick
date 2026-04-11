@@ -1,0 +1,23 @@
+Bug 5: article detail action clarity and active-state feedback
+
+Scope
+- Article detail action row
+- Article tag management area
+
+Observed issue
+- The global Bookmarks navbar link can be confused with the article-detail bookmark action.
+- The detail action buttons did not provide a strong enough active visual state after interaction.
+
+Expected behavior
+- The bookmark CTA on article detail should clearly indicate that it bookmarks the current article.
+- When an action is active, that button should change to a strong accent state while inactive actions remain visually quieter.
+
+Fix applied
+- Updated the article-detail bookmark CTA text from generic save wording to article-specific bookmark wording.
+- Added a distinct active accent style for the bookmarked state.
+- Added a distinct active accent style for the Add Tag button while tag editing is open.
+
+Validation target
+- On article detail, the bookmark action reads as an article action, not a navigation link.
+- When the article is bookmarked, the button switches to an obvious active state.
+- When tag editing is opened, Add Tag switches to an obvious active state.

@@ -1,0 +1,15 @@
+# Giảm context khi build image (backend / frontend Dockerfile build từ root).
+node_modules
+**/node_modules
+.git
+.github
+**/.next
+**/dist
+**/*.log
+.env
+.env.*
+!.env.example
+**/coverage
+**/.turbo
+*.md
+!README.md

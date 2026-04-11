@@ -11,10 +11,13 @@ export function createHttpError(statusCode: number, message: string): HttpError 
 export function getErrorResponse(error: unknown): { statusCode: number; message: string } {
   if (error instanceof Error) {
     const httpError = error as HttpError;
+    const statusCode = httpError.statusCode ?? 500;
+    const isProduction = process.env.NODE_ENV === "production";
+    const message = statusCode >= 500 && isProduction ? "Internal server error" : error.message || "Internal server error";
 
     return {
-      statusCode: httpError.statusCode ?? 500,
-      message: error.message || "Internal server error",
+      statusCode,
+      message,
     };
   }
 

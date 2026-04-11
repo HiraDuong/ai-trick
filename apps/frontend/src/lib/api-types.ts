@@ -181,6 +181,7 @@ export interface ArticleVersionDto {
   id: string;
   articleId: string;
   contentSnapshot: unknown;
+  createdAt: string;
   updatedAt: string;
   updatedBy: {
     id: string;

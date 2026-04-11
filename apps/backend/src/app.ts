@@ -16,7 +16,41 @@ interface HealthLikeErrorResponse extends ApiErrorResponse {}
 
 const app = express();
 
-app.use(cors({ origin: config.corsOrigin }));
+const allowAllCorsOrigins = config.corsOrigins.includes("*");
+
+function matchesCorsOrigin(origin: string, allowedOrigin: string): boolean {
+  if (origin === allowedOrigin) {
+    return true;
+  }
+
+  if (!allowedOrigin.includes("*")) {
+    return false;
+  }
+
+  const escapedPattern = allowedOrigin
+    .replace(/[|\\{}()[\]^$+?.]/g, "\\$&")
+    .replace(/\*/g, ".*");
+
+  return new RegExp(`^${escapedPattern}$`).test(origin);
+}
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      const isAllowedOrigin =
+        !origin ||
+        allowAllCorsOrigins ||
+        config.corsOrigins.some((allowedOrigin) => matchesCorsOrigin(origin, allowedOrigin));
+
+      if (isAllowedOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+  })
+);
 app.use(express.json());
 
 app.get(
@@ -51,6 +85,8 @@ app.use(
     _next: NextFunction
   ) => {
     const { statusCode, message } = getErrorResponse(error);
+
+    console.error("Unhandled backend error", error);
 
     response.status(statusCode).json({
       success: false,

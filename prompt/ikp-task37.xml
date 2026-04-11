@@ -1,0 +1,83 @@
+<task id="task-37-article-actions">
+  <objective>
+    Add "Add Tag" and "Bookmark" actions to the article UI with role-based permissions.
+  </objective>
+
+  <roles>
+    <role name="EDITOR">
+      Can add and manage tags on articles.
+    </role>
+    <role name="AUTHOR">
+      Can add and manage tags on their own articles.
+    </role>
+    <role name="VIEWER">
+      Can only bookmark articles.
+    </role>
+  </roles>
+
+  <requirements>
+
+    <ui>
+      <requirement>
+        Add "Add Tag" button on article page.
+      </requirement>
+      <requirement>
+        Add "Bookmark" button on article page.
+      </requirement>
+      <requirement>
+        Buttons must be visually consistent with existing UI and properly aligned.
+      </requirement>
+    </ui>
+
+    <behavior>
+
+      <add_tag>
+        <requirement>
+          Only visible to EDITOR and AUTHOR.
+        </requirement>
+        <requirement>
+          Allows adding/removing tags for an article.
+        </requirement>
+        <requirement>
+          Must reflect updated tags immediately in UI after changes.
+        </requirement>
+      </add_tag>
+
+      <bookmark>
+        <requirement>
+          Available to all roles including VIEWER.
+        </requirement>
+        <requirement>
+          Users can bookmark/unbookmark an article.
+        </requirement>
+        <requirement>
+          Bookmark state must be persisted per user.
+        </requirement>
+        <requirement>
+          UI must reflect current bookmark state (e.g. active/inactive).
+        </requirement>
+      </bookmark>
+
+    </behavior>
+
+    <permissions>
+      <rule>Add Tag: allowed for AUTHOR (own articles) and EDITOR</rule>
+      <rule>Bookmark: allowed for all authenticated users (including VIEWER)</rule>
+    </permissions>
+
+  </requirements>
+
+  <validation>
+    <check>Role-based visibility of buttons works correctly</check>
+    <check>Unauthorized users cannot access Add Tag actions</check>
+    <check>Bookmark toggling works and persists correctly</check>
+    <check>UI updates correctly after actions without refresh</check>
+    <check>No layout or styling issues introduced</check>
+  </validation>
+
+  <output>
+    <instruction>Implement UI changes and necessary logic</instruction>
+    <instruction>Ensure proper backend/API integration if required</instruction>
+    <instruction>Briefly summarize what was added and how permissions are enforced</instruction>
+  </output>
+</task>

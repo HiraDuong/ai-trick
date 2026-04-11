@@ -15,6 +15,11 @@ function normalizeRedirectPath(redirectTo: string): string {
   return redirectTo.startsWith("/") ? redirectTo : "/";
 }
 
+function buildRegisterHref(redirectTo: string): string {
+  const params = new URLSearchParams({ redirectTo: normalizeRedirectPath(redirectTo) });
+  return `/register?${params.toString()}`;
+}
+
 export function LoginForm({ redirectTo }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -108,6 +113,12 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
           >
             Cancel
+          </Link>
+          <Link
+            href={buildRegisterHref(redirectTo)}
+            className="rounded-full border border-[var(--color-line)] bg-white px-5 py-3 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+          >
+            Create account
           </Link>
         </div>
       </form>

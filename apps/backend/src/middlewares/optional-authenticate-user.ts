@@ -1,8 +1,13 @@
 // Luvina
 // Vu Huy Hoang - Dev2
 import type { NextFunction, Request, Response } from "express";
+import type { AuthenticatedUser } from "../types/auth.types";
 import { getUserById, verifyAccessToken } from "../services/auth.service";
 import { createHttpError } from "../utils/error.utils";
+
+function setRequestUser(request: Request, user: AuthenticatedUser): void {
+  (request as Request & { user?: AuthenticatedUser }).user = user;
+}
 
 export async function optionalAuthenticateUser(
   request: Request,
@@ -23,7 +28,7 @@ export async function optionalAuthenticateUser(
 
     const token = authorizationHeader.replace("Bearer ", "").trim();
     const payload = verifyAccessToken(token);
-    request.user = await getUserById(payload.sub);
+    setRequestUser(request, await getUserById(payload.sub));
     next();
   } catch (error) {
     next(error);

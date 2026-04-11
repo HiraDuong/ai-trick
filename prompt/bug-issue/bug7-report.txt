@@ -1,0 +1,28 @@
+Bug 7: Cloud Run production deployment configuration drift
+
+Scope
+- GitLab Cloud Run pipeline
+- Google Artifact Registry image publishing
+- Backend CORS configuration in Cloud Run production
+
+Observed issue
+- Cloud Run image build jobs attempted to push the `latest` tag to Artifact Registry even though the repository had tag immutability enabled.
+- Backend production CORS configuration remained pinned to `http://localhost:3000`, which blocked requests from the deployed frontend Cloud Run URL.
+
+Expected behavior
+- Cloud Run build jobs should publish immutable, commit-specific image tags without attempting to overwrite `latest` in Artifact Registry.
+- After frontend deployment, backend CORS should allow the real frontend Cloud Run origin so browser preflight requests succeed.
+
+Actual behavior
+- Kaniko failed with `MANIFEST_INVALID: cannot update tag latest` during Artifact Registry push.
+- Browser requests from the deployed frontend failed preflight because `Access-Control-Allow-Origin` returned `http://localhost:3000` instead of the frontend Cloud Run URL.
+
+Fix applied
+- Removed Artifact Registry `:latest` pushes from the Cloud Run Kaniko jobs and kept commit-SHA tags only.
+- Updated backend runtime config to support a comma-separated `CORS_ORIGIN` list instead of a single origin.
+- Updated the Cloud Run frontend deploy job to read the deployed frontend URL and append it to the backend service `CORS_ORIGIN` value automatically.
+
+Validation target
+- Cloud Run backend/frontend image build jobs complete without immutable-tag push failures.
+- Frontend Cloud Run can call backend Cloud Run APIs without CORS preflight rejection.
+- Backend still preserves local development access through `http://localhost:3000` unless explicitly overridden.

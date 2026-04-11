@@ -6,6 +6,7 @@ import type { ArticleDetailDto, ArticleStatsDto, CommentListResponseDto, Helpful
 import { formatArticleDate, formatViewCount } from "@/lib/format";
 import { buildTagHref } from "@/lib/tag-links";
 import { ArticleBookmarkButton } from "./article-bookmark-button";
+import { ArticleDeleteButton } from "./article-delete-button";
 import { ArticleEngagementPanel } from "./article-engagement-panel";
 import { ArticleContentRenderer } from "./article-content-renderer";
 
@@ -15,13 +16,13 @@ interface ArticleDetailViewProps {
   helpfulnessResult: ApiResult<HelpfulnessSummaryDto>;
   statsResult: ApiResult<ArticleStatsDto>;
   reactionsResult: ApiResult<ReactionSummaryDto>;
+  currentUserId?: string;
+  currentUserRole?: string;
 }
 
-function shouldRenderEngagementPanel(article: ArticleDetailDto): boolean {
-  return article.title !== "Building a reliable knowledge-sharing workflow";
-}
+export function ArticleDetailView({ article, commentsResult, helpfulnessResult, statsResult, reactionsResult, currentUserId, currentUserRole }: ArticleDetailViewProps) {
+  const canEdit = currentUserId === article.author.id || currentUserRole === "EDITOR";
 
-export function ArticleDetailView({ article, commentsResult, helpfulnessResult, statsResult, reactionsResult }: ArticleDetailViewProps) {
   return (
     <main className="min-h-screen px-6 py-10 sm:px-10 lg:px-14">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -34,6 +35,17 @@ export function ArticleDetailView({ article, commentsResult, helpfulnessResult, 
           </Link>
 
           <div className="flex items-center gap-3">
+            {canEdit ? (
+              <>
+                <Link
+                  href={`/articles/${article.id}/edit`}
+                  className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  Edit article
+                </Link>
+                <ArticleDeleteButton articleId={article.id} />
+              </>
+            ) : null}
             <ArticleBookmarkButton articleId={article.id} />
             <span className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-accent-contrast)]">
               {article.status}
@@ -78,15 +90,13 @@ export function ArticleDetailView({ article, commentsResult, helpfulnessResult, 
           </div>
         </section>
 
-        {shouldRenderEngagementPanel(article) ? (
-          <ArticleEngagementPanel
-            articleId={article.id}
-            commentsResult={commentsResult}
-            helpfulnessResult={helpfulnessResult}
-            statsResult={statsResult}
-            reactionsResult={reactionsResult}
-          />
-        ) : null}
+        <ArticleEngagementPanel
+          articleId={article.id}
+          commentsResult={commentsResult}
+          helpfulnessResult={helpfulnessResult}
+          statsResult={statsResult}
+          reactionsResult={reactionsResult}
+        />
       </div>
     </main>
   );
